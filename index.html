@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Simulazione di Attacco Hacking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .controls {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .controls label, .controls input {
+            margin-right: 10px;
+        }
+        button {
+            margin-left: 10px;
+        }
+        #container {
+            display: flex;
+        }
+        .canvas-container {
+            width: 50%;
+            box-sizing: border-box;
+            padding: 10px;
+            position: relative; /* Per posizionare il testo sopra l'istogramma */
+        }
+        canvas {
+            border: 1px solid #000;
+            width: 100%;
+            height: 500px; /* Altezza fissa per i canvas */
+        }
+        .mean-text {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <label for="nHackers">Number of hackers (n):</label>
+        <input type="number" id="nHackers" value="5" min="1">
+        <label for="mServers">Numero of servers (m):</label>
+        <input type="number" id="mServers" value="10" min="1">
+        <label for="pSuccess">Probability of success (p):</label>
+        <input type="number" id="pSuccess" value="0.5" step="0.1" min="0" max="1">
+        <button onclick="startSimulation()">Simulate</button>
+    </div>
+
+    <div id="container">
+        <div class="canvas-container">
+            <canvas id="graph" width="400" height="500"></canvas>
+        </div>
+        <div class="canvas-container">
+            <div class="mean-text" id="meanText"></div>
+            <canvas id="histogram" width="400" height="500"></canvas>
+        </div>
+    </div>
+
+    <script>
+        function startSimulation() {
+            var n = parseInt(document.getElementById('nHackers').value);
+            var m = parseInt(document.getElementById('mServers').value);
+            var p = parseFloat(document.getElementById('pSuccess').value);
+
+            // Validazione degli input
+            if (isNaN(n) || n <= 0) {
+                alert("Inserisci un numero valido di hacker (n > 0)");
+                return;
+            }
+            if (isNaN(m) || m <= 0) {
+                alert("Inserisci un numero valido di server (m > 0)");
+                return;
+            }
+            if (isNaN(p) || p < 0 || p > 1) {
+                alert("Inserisci una probabilità valida (0 ≤ p ≤ 1)");
+                return;
+            }
+
+            // Ottenimento dei contesti dei canvas
+            var canvas = document.getElementById('graph');
+            var ctx = canvas.getContext('2d');
+
+            var histCanvas = document.getElementById('histogram');
+            var histCtx = histCanvas.getContext('2d');
+
+            // Pulizia dei canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            histCtx.clearRect(0, 0, histCanvas.width, histCanvas.height);
+
+            // Impostazioni comuni
+            var margin = 50;
+            var width = canvas.width - 2 * margin;
+            var height = canvas.height - 2 * margin;
+
+            // Aumento delle dimensioni del font e dello spessore delle linee
+            ctx.font = '14px Arial';
+            ctx.lineWidth = 2;
+            histCtx.font = '14px Arial';
+            histCtx.lineWidth = 2;
+
+            // Disegno degli assi per il grafico delle scalette
+            ctx.strokeStyle = 'black'; // Assi neri
+            ctx.beginPath();
+            ctx.moveTo(margin, margin);
+            ctx.lineTo(margin, canvas.height - margin);
+            ctx.lineTo(canvas.width - margin, canvas.height - margin);
+            ctx.stroke();
+
+            // Etichettatura dei server sull'asse x
+            var serverPositions = [];
+            for (var i = 0; i < m; i++) {
+                var x = margin + i * (width / (m - 1));
+                serverPositions.push(x);
+                ctx.fillStyle = 'black'; // Etichette nere
+                ctx.fillRect(x - 2, canvas.height - margin - 2, 4, 4);
+                ctx.fillText("S" + (i + 1), x - 10, canvas.height - margin + 15);
+            }
+
+            // Etichettatura dei successi sull'asse y
+            for (var i = 0; i <= m; i++) {
+                var y = canvas.height - margin - i * (height / m);
+                ctx.fillStyle = 'black'; // Etichette nere
+                ctx.fillRect(margin - 2, y - 2, 4, 4);
+                ctx.fillText(i, margin - 25, y + 5);
+            }
+
+            // Simulazione per ogni hacker e raccolta dei successi
+            var colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown', 'pink', 'cyan', 'magenta', 'yellow'];
+            var successCounts = new Array(m + 1).fill(0);
+            var totalSuccesses = 0;
+            var individualSuccesses = []; // Per calcolare la media ricorsivamente
+
+            for (var h = 0; h < n; h++) {
+                var x = margin;
+                var y = canvas.height - margin;
+                var successes = 0;
+
+                ctx.strokeStyle = colors[h % colors.length];
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+
+                for (var s = 0; s < m; s++) {
+                    var r = Math.random();
+                    if (r <= p) {
+                        // Successo: movimento verticale verso l'alto
+                        y -= (height / m);
+                        ctx.lineTo(x, y);
+                        successes++;
+                    }
+                    // Movimento orizzontale al prossimo server
+                    if (s < m - 1) {
+                        x = serverPositions[s + 1];
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+
+                // Aggiorna il conteggio dei successi
+                successCounts[successes]++;
+                totalSuccesses += successes;
+                individualSuccesses.push(successes); // Salva il numero di successi dell'hacker
+            }
+
+            // Disegno dell'istogramma
+            drawHistogram(histCtx, successCounts, n, individualSuccesses);
+        }
+
+        function drawHistogram(ctx, successCounts, n, individualSuccesses) {
+            var margin = 50;
+            var width = ctx.canvas.width - 2 * margin;
+            var height = ctx.canvas.height - 2 * margin;
+
+            // Disegno degli assi
+            ctx.strokeStyle = 'black'; // Assi neri
+            ctx.beginPath();
+            ctx.moveTo(margin, margin);
+            ctx.lineTo(margin, ctx.canvas.height - margin);
+            ctx.lineTo(ctx.canvas.width - margin, ctx.canvas.height - margin);
+            ctx.stroke();
+
+            // Etichettatura asse y
+            ctx.save();
+            ctx.translate(margin - 35, ctx.canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'black'; // Etichetta nera
+            ctx.fillText("Number of hackers", 0, 0);
+            ctx.restore();
+
+            // Etichettatura asse x
+            ctx.fillStyle = 'black'; // Etichetta nera
+            ctx.fillText("Number of successes (k)", margin + width / 2, ctx.canvas.height - margin + 40);
+
+            // Trova il conteggio massimo per scalare le barre
+            var maxCount = Math.max(...successCounts);
+
+            // Larghezza di ogni barra
+            var barSpacing = 5;
+            var barWidth = (width - (successCounts.length - 1) * barSpacing) / successCounts.length;
+
+            // Calcolo della media aritmetica usando la formula ricorsiva
+            var Mk = 0;
+            for (var k = 1; k <= n; k++) {
+                var xk = individualSuccesses[k - 1]; // Successi dell'hacker k-esimo
+                Mk = Mk + (xk - Mk) / k;
+            }
+
+            // Rappresentazione grafica della media con una linea verticale rossa
+            var meanPosition = margin + (Mk / (successCounts.length - 1)) * width;
+
+            // Disegna le barre dell'istogramma
+            for (var i = 0; i < successCounts.length; i++) {
+                var barHeight = maxCount > 0 ? (successCounts[i] / maxCount) * height : 0;
+                var x = margin + i * (barWidth + barSpacing);
+                var y = ctx.canvas.height - margin - barHeight;
+
+                ctx.fillStyle = 'skyblue';
+                ctx.fillRect(x, y, barWidth, barHeight);
+
+                // Etichetta sotto ogni barra
+                ctx.fillStyle = 'black'; // Etichette nere
+                ctx.textAlign = 'center';
+                ctx.fillText(i, x + barWidth / 2, ctx.canvas.height - margin + 15);
+
+                // Conteggio sopra ogni barra (solo se maggiore di zero)
+                if (successCounts[i] > 0) {
+                    ctx.fillText(successCounts[i], x + barWidth / 2, y - 10);
+                }
+            }
+
+            // Disegno della linea della media
+            ctx.strokeStyle = 'red'; // Linea della media rossa
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(meanPosition, ctx.canvas.height - margin);
+            ctx.lineTo(meanPosition, margin);
+            ctx.stroke();
+
+            // Rimosso l'etichetta 'M' dalla linea della media
+            // ctx.fillStyle = 'red'; // Etichetta della media rossa
+            // ctx.fillText("M", meanPosition, margin - 10);
+
+            // Visualizzazione del testo della media sopra l'istogramma
+            var meanTextElement = document.getElementById('meanText');
+            meanTextElement.textContent = "The average, in red, is M = " + Mk.toFixed(2);
+        }
+    </script>
+</body>
+</html>
