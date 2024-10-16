@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Server Penetration Simulation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        .container {
+            text-align: center;
+        }
+        #penetrationChart {
+            width: 90%;
+            height: 400px;
+            margin: 0 auto;
+            display: block;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+        .controls label, .controls input, .controls button {
+            margin: 0;
+        }
+        .controls input {
+            width: 80px; /* Riduci la larghezza dei campi di input */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4">Server Penetration Simulation</h1>
+        <div class="controls">
+            <label for="n">Number of servers:</label>
+            <input type="number" id="n" class="form-control" value="10">
+            
+            <label for="m">Number of attackers:</label>
+            <input type="number" id="m" class="form-control" value="5">
+            
+            <label for="p">Penetration probability:</label>
+            <input type="number" id="p" class="form-control" step="0.1" value="0.3">
+            
+            <button class="btn btn-primary" onclick="generateChart()">Generate Chart</button>
+        </div>
+        <canvas id="penetrationChart"></canvas>
+    </div>
+    
+    <script>
+        function generateChart() {
+            // Leggi i valori di input dal form
+            const n = parseInt(document.getElementById('n').value); // Numero di server
+            const m = parseInt(document.getElementById('m').value); // Numero di attaccanti
+            const p = parseFloat(document.getElementById('p').value); // Probabilità di penetrazione
+
+            // Seleziona l'elemento canvas e ottieni il contesto su cui disegnare
+            const canvas = document.getElementById('penetrationChart');
+            const ctx = canvas.getContext('2d');
+
+            // Imposta le dimensioni del canvas in base alle dimensioni effettive visualizzate
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            // Pulisci il canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Imposta il colore dello sfondo e riempi il canvas
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Calcola le larghezze e le altezze considerando i margini
+            const marginLeft = 80; // Margine a sinistra per le etichette
+            const marginBottom = 60; // Margine in basso per le etichette
+            const marginTop = 40; // Margine in alto
+            const marginRight = 80; // Margine a destra
+
+            // Dividi il canvas in 2/3 per il grafico degli hacker e 1/3 per l'istogramma
+            const totalUsableWidth = canvas.width - marginLeft - marginRight;
+            const penetrationWidth = (2 / 3) * totalUsableWidth; // 2/3 per il grafico delle penetrazioni
+            const histogramWidth = totalUsableWidth - penetrationWidth; // 1/3 per l'istogramma
+            const usableHeight = canvas.height - marginTop - marginBottom;
+
+            // Simulazione degli attacchi
+            const allHackersArray = [];
+            for(let i = 0; i < m; i++){
+                const singleHackerArray = [];
+                for (let j = 0; j < n; j++){
+                    singleHackerArray.push(Math.random() < p ? 1 : 0);
+                }
+                allHackersArray.push(singleHackerArray);
+            }
+
+            // Calcola il livello massimo raggiunto da ogni hacker
+            const hackerLevels = allHackersArray.map(attackArray => {
+                return attackArray.reduce((level, penetration) => {
+                    return level + (penetration === 1 ? 1 : 0);
+                }, 0);
+            });
+
+            // Conta quanti hacker hanno raggiunto ciascun livello
+            const maxLevel = n; // Il massimo livello possibile è n (tutte le penetrazioni riuscite)
+            const levelCounts = new Array(maxLevel + 1).fill(0);
+            hackerLevels.forEach(level => {
+                levelCounts[level]++;
+            });
+
+            // Disegna il grafico degli hacker
+            drawPenetrationChart(ctx, allHackersArray, n, m, marginLeft, marginBottom, marginTop, penetrationWidth, usableHeight, levelCounts, maxLevel, histogramWidth);
+        }
+
+        function drawPenetrationChart(ctx, attacks, n, m, marginLeft, marginBottom, marginTop, penetrationWidth, usableHeight, levelCounts, maxLevel, histogramWidth) {
+            const heightStep = usableHeight / (n + 1); // Altezza per livello basata sul numero di server
+            const yLevels = n; // Livelli sull'asse y basati sui server
+
+            // Disegna l'asse x e y del grafico delle penetrazioni
+            ctx.beginPath();
+            ctx.moveTo(marginLeft, ctx.canvas.height - marginBottom);
+            ctx.lineTo(marginLeft + penetrationWidth, ctx.canvas.height - marginBottom);
+            ctx.moveTo(marginLeft, ctx.canvas.height - marginBottom);
+            ctx.lineTo(marginLeft, marginTop);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Aggiungi le tacche sull'asse x (servers)
+            ctx.font = '12px Arial';
+            ctx.fillStyle = 'black';
+            const xTickInterval = Math.ceil(n / 20); // Mostra massimo 20 tacche sull'asse x
+            for (let j = 0; j <= n; j++) {
+                const x = marginLeft + (j * (penetrationWidth / n));
+                ctx.beginPath();
+                ctx.moveTo(x, ctx.canvas.height - marginBottom);
+                ctx.lineTo(x, ctx.canvas.height - marginBottom + 5);
+                ctx.stroke();
+
+                if (j % xTickInterval === 0 || j === n) {
+                    ctx.textAlign = 'center';
+                    ctx.fillText(j, x, ctx.canvas.height - marginBottom + 20);
+                }
+            }
+
+            // Aggiungi le tacche sull'asse y (livelli di penetrazione)
+            ctx.textAlign = 'right';
+            const yTickInterval = Math.ceil((n + 1) / 10); // Mostra massimo 10 tacche sull'asse y
+            for (let k = 0; k <= yLevels; k++) {
+                const y = ctx.canvas.height - marginBottom - (k * heightStep);
+                ctx.beginPath();
+                ctx.moveTo(marginLeft, y);
+                ctx.lineTo(marginLeft - 5, y);
+                ctx.stroke();
+
+                if (k % yTickInterval === 0 || k === yLevels) {
+                    ctx.fillText(k, marginLeft - 10, y + 4);
+                }
+            }
+
+            // Etichetta asse x
+            ctx.textAlign = 'center';
+            ctx.font = '14px Arial';
+            ctx.fillText('Servers', marginLeft + penetrationWidth / 2, ctx.canvas.height - marginBottom + 40);
+
+            // Etichetta asse y
+            ctx.save();
+            ctx.translate(marginLeft - 60, ctx.canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Penetration Level', 0, 0);
+            ctx.restore();
+
+            // Disegna le linee per ogni hacker
+            const colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan', 'magenta', 'brown', 'pink', 'teal'];
+
+            for (let i = 0; i < attacks.length; i++) {
+                const color = colors[i % colors.length];
+                ctx.strokeStyle = color;
+                ctx.beginPath();
+
+                let currentX = marginLeft;
+                let currentY = ctx.canvas.height - marginBottom;
+
+                ctx.moveTo(currentX, currentY);
+
+                for (let j = 0; j < n; j++) {
+                    // Segmento verticale se penetrazione riuscita
+                    if (attacks[i][j] === 1) {
+                        const newY = currentY - heightStep;
+                        currentY = newY < marginTop ? marginTop : newY;
+
+                        ctx.lineTo(currentX, currentY); // Segmento verticale
+                    }
+
+                    // Segmento orizzontale verso il prossimo server
+                    const nextX = marginLeft + ((j + 1) * (penetrationWidth / n));
+                    currentX = nextX > marginLeft + penetrationWidth ? marginLeft + penetrationWidth : nextX;
+
+                    ctx.lineTo(currentX, currentY); // Segmento orizzontale
+                }
+
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Disegna l'istogramma
+            drawHistogram(ctx, levelCounts, maxLevel, marginLeft, marginBottom, marginTop, penetrationWidth, histogramWidth, usableHeight);
+        }
+
+        function drawHistogram(ctx, levelCounts, maxLevel, marginLeft, marginBottom, marginTop, penetrationWidth, histogramWidth, usableHeight) {
+            const baseX = marginLeft + penetrationWidth + 20; // Posizione di partenza dell'istogramma attaccato al grafico delle penetrazioni con un po' di spazio
+            const barGap = 10; // Spazio tra una barra e l'altra
+            const barHeight = (usableHeight / (maxLevel + 1)) - barGap;
+
+            // Disegna l'asse y dell'istogramma (linea verticale)
+            ctx.beginPath();
+            ctx.moveTo(baseX, ctx.canvas.height - marginBottom);
+            ctx.lineTo(baseX, marginTop);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Aggiungi le tacche sull'asse y dell'istogramma
+            const yTickInterval = Math.ceil((maxLevel + 1) / 10);
+            ctx.font = '12px Arial';
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'right';
+            for (let k = 0; k <= maxLevel; k++) {
+                const y = ctx.canvas.height - marginBottom - (k * (usableHeight / (maxLevel + 1)));
+                ctx.beginPath();
+                ctx.moveTo(baseX, y);
+                ctx.lineTo(baseX - 5, y);
+                ctx.stroke();
+
+                if (k % yTickInterval === 0 || k === maxLevel) {
+                    ctx.fillText(k, baseX - 10, y + 4);
+                }
+            }
+
+            ctx.fillStyle = 'lightblue';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'left';
+
+            for (let level = 0; level <= maxLevel; level++) {
+                if (levelCounts[level] > 0) {
+                    const y = ctx.canvas.height - marginBottom - (level * (barHeight + barGap));
+                    const barWidth = (levelCounts[level] / Math.max(...levelCounts)) * (histogramWidth - 20); // Riduci un po' la larghezza per adattarla
+
+                    // Evita che le barre vadano fuori dallo schermo
+                    const adjustedBarWidth = Math.min(barWidth, histogramWidth - 20);
+
+                    // Disegna la barra
+                    ctx.fillRect(baseX, y - barHeight, adjustedBarWidth, barHeight);
+
+                    // Aggiungi solo il numero di hacker
+                    ctx.fillStyle = 'black';
+                    ctx.fillText(`${levelCounts[level]}`, baseX + adjustedBarWidth + 5, y - barHeight / 2);
+                    ctx.fillStyle = 'lightblue';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
