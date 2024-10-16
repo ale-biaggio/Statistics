@@ -8,16 +8,14 @@
         html, body {
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
         }
         .container {
             text-align: center;
+            margin: 0 auto;
+            max-width: 1200px; /* Increased max-width to allow more space */
         }
         #penetrationChart {
-            width: 90%;
+            width: 100%;
             height: 400px;
             margin: 0 auto;
             display: block;
@@ -28,22 +26,34 @@
         .controls {
             display: flex;
             justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap; /* Prevent wrapping */
             gap: 10px;
             margin-bottom: 20px;
             padding: 10px;
         }
-        .controls label, .controls input, .controls button {
-            margin: auto;
-            align-items: center;
+        .controls label {
+            margin: 0 5px 0 0;
         }
         .controls input {
             width: 80px;
+            margin-right: 10px;
+        }
+        .controls button {
+            margin-left: 10px;
+        }
+        @media (max-width: 1000px) {
+            .controls {
+                flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            }
+            .controls button {
+                margin-top: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h3>Server Penetration Simulation</h3>
         <div class="controls">
             <label for="n">Number of servers:</label>
             <input type="number" id="n" class="form-control" value="10">
