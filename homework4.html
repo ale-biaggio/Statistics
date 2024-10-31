@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistical Independence</title>
+    <!-- Include MathJax to render LaTeX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script type="text/javascript" id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 19px;
+            line-height: 28px;
+            color: #1c1c1c;
+        }
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 36px;
+            color: #095f7a;
+            font-weight: bold;
+        }
+        h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 24px;
+            color: #095f7a;
+            font-weight: bold;
+            margin-top: 40px;
+        }
+        p {
+            margin-bottom: 20px;
+        }
+        strong {
+            font-weight: bold;
+        }
+html, body {
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            text-align: center;
+            margin: 0 auto;
+            max-width: 1200px;
+        }
+        #graphCanvas {
+            width: 98%;
+            height: 400px;
+            margin: 0 auto;
+            display: block;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+        .controls label {
+            margin: 0 5px 0 0;
+        }
+        .controls input {
+            width: 100px;
+            margin-right: 10px;
+        }
+        .controls button {
+            margin-left: 10px;
+        }
+        @media (max-width: 1000px) {
+            .controls {
+                flex-wrap: wrap;
+            }
+            .controls button {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Theory</h1>
+    <h1>Statistical Independence</h1>
+    <p>
+        Statistical independence is a fundamental concept in bivariate or multivariate analyses, as it inherently involves at least two variables. To gain an understanding of statistical independence, it is helpful to begin with an analysis of both practical observations and formal definitions derived from probability theory.
+    </p>
+    <p>
+        Let's consider two variables, height (X) and weight (Y). By examining the relationship between these categories, we observe that, when the data is partitioned based on one variable, such as height, the distribution of weight can change significantly. Such a change implies a dependency between height and weight, suggesting that the relationship between these categories is inconsistent throughout the dataset.
+    </p>
+    <p>
+        If height and weight were independent, the distribution of weight would remain consistent regardless of the height categories. However, observed variations in the distributions indicate a dependency between these variables.
+    </p>
+    <p>
+        Formally, statistical independence between two random variables implies that the conditional distribution of one variable, given the other, must be identical to its marginal distribution. In other words, knowledge of one variable should not provide any additional information regarding the distribution of the other. Mathematically, this condition is expressed as the conditional distribution \( X | Y = y_i \) being equal to the marginal distribution of \( X \), indicating that the occurrence of one variable does not influence the probability of the other.
+    </p>
+    <p>
+        Independence can be verified by comparing the conditional frequencies with the marginal frequencies. If they match, the variables are deemed independent. Symbolically, this condition can be represented by comparing the joint distribution of \( X \) and \( Y \) with the product of their respective marginal distributions. Specifically, if \( f(X = x_i, Y = y_j) \) matches \( f(X = x_i) \times f(Y = y_j) \), then \( X \) and \( Y \) are independent.
+        Probabilities in this context can be viewed as ratios of frequencies. If the joint frequencies align with the product of the marginal frequencies, it suggests an independent relationship. 
+    </p>
+    <p>
+        In statistical terms, the frequency of joint occurrences, denoted as \( n_{ij} \), over the total frequency \( n \) can be expressed as follows:
+    </p>
+    <p>
+        \[
+        f_{X = x_i, Y = y_j} = \frac{n_{ij}}{n}
+        \]
+    </p>
+    <p>
+        For independence, this joint frequency can also be represented by multiplying the individual marginal frequencies:
+    </p>
+    <p>
+        \[
+        f_{X = x_i, Y = y_j} = f_{X = x_i} \times f_{Y = y_j}
+        \]
+    </p>
+    <p>
+        The same condition can be expressed in terms of frequencies (statistical terms) or probabilities. In statistical terms, independence is shown as:
+    </p>
+    <p>
+        \[
+        F_{X = x_i \; \text{and} \; Y = y_j} = F_{X = x_i} \cdot F_{Y = y_j}
+        \]
+        \[
+        F_{X | Y = y_j} = F_{X = x_i}
+        \]
+    </p>
+    <p>
+        Alternatively, in probability terms, this relationship is expressed as:
+    </p>
+    <p>
+        \[
+        P(X = x_i \cap Y = y_j) = P(X = x_i) \cdot P(Y = y_j)
+        \]
+        \[
+        P(X | Y) = P(X)
+        \]
+    </p> <br><br>
+<h1 style="text-align: center;">Practice</h1>
+    <div class="container">
+        <div class="controls">
+            <label for="numSimulations">Number of simulations:</label>
+            <input class="form-control" type="number" id="numSimulations" value="200">
+            <label for="numSteps">Number of intervals (m):</label>
+            <input class="form-control" type="number" id="numSteps" value="10000" style="width: 120px;">
+            <label for="probabilityP">Probability p:</label>
+            <input class="form-control" type="number" id="probabilityP" step="0.01" value="0.5">
+            <label for="intermediateStep">Intermediate step (k):</label>
+            <input class="form-control" type="number" id="intermediateStep" value="5000">
+            <button type="button" class="btn btn-primary" onclick="runSimulation()">Run Simulation</button>
+        </div>
+        <canvas id="graphCanvas"></canvas>
+    </div>
+    <script>
+        function runSimulation() {
+            // Valori di input
+            var n = parseInt(document.getElementById('numSimulations').value);
+            var m = parseInt(document.getElementById('numSteps').value) || 10000; // Numero di intervalli di tempo
+            var p = parseFloat(document.getElementById('probabilityP').value); // Probabilità p
+            var k = parseInt(document.getElementById('intermediateStep').value);
+            if (k > m) k = m; // Assicura che k sia entro i limiti
+
+            // Canvas per il grafico principale
+            var canvas = document.getElementById('graphCanvas');
+            var ctx = canvas.getContext('2d');
+
+            // Imposta le dimensioni del canvas
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            // Pulisce il canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Margini
+            var marginLeft = 50;
+            var marginRight = 150; // Riserva spazio per l'istogramma finale
+            var marginTop = 50;
+            var marginBottom = 50;
+
+            var plotWidth = canvas.width - marginLeft - marginRight;
+            var plotHeight = canvas.height - marginTop - marginBottom;
+
+            // Passo sull'asse X
+            var xStep = plotWidth / m;
+
+            // Genera colori per ogni traiettoria
+            var colors = [];
+            for (var i = 0; i < n; i++) {
+                colors.push('hsl(' + (i * 360 / n) + ', 100%, 50%)');
+            }
+
+            // Array per memorizzare i valori finali e intermedi
+            var finalValues = [];
+            var intermediateValues = [];
+
+            // Simula le traiettorie
+            var maxAbsValue = 0; // Per scalare l'asse Y
+            var trajectories = []; // Memorizza tutte le traiettorie
+
+            var dt = 1.0 / m; // Tempo totale T = 1.0
+
+            for (var sim = 0; sim < n; sim++) {
+                var X = [0]; // Valore iniziale X0 = 0
+                for (var step = 1; step <= m; step++) {
+                    var rand = Math.random();
+                    var jump = 0;
+                    // Se rand ≤ p, salta di +sqrt(dt), altrimenti salta di -sqrt(dt)
+                    if (rand <= p) {
+                        jump = Math.sqrt(dt);
+                    } else {
+                        jump = -Math.sqrt(dt);
+                    }
+                    var X_new = X[step - 1] + jump;
+                    X.push(X_new);
+
+                    // Aggiorna il valore massimo assoluto per la scalatura
+                    if (Math.abs(X_new) > maxAbsValue) {
+                        maxAbsValue = Math.abs(X_new);
+                    }
+                }
+                trajectories.push(X);
+
+                // Colleziona il valore finale
+                finalValues.push(X[m]);
+
+                // Colleziona il valore al passo intermedio k
+                intermediateValues.push(X[k]);
+            }
+
+            // Calcola media e varianza per finalValues
+            var sum = finalValues.reduce(function(a, b) { return a + b; }, 0);
+            var mean = sum / finalValues.length;
+
+            var sumSquaredDiffs = finalValues.reduce(function(a, b) { return a + Math.pow(b - mean, 2); }, 0);
+            var variance = sumSquaredDiffs / finalValues.length;
+
+            // Calcola media e varianza per intermediateValues
+            var sum_k = intermediateValues.reduce(function(a, b) { return a + b; }, 0);
+            var mean_k = sum_k / intermediateValues.length;
+
+            var sumSquaredDiffs_k = intermediateValues.reduce(function(a, b) { return a + Math.pow(b - mean_k, 2); }, 0);
+            var variance_k = sumSquaredDiffs_k / intermediateValues.length;
+
+            // Scalatura dell'asse Y
+            var yMax = maxAbsValue + 1; // Aggiungi un margine
+            var yMin = -maxAbsValue - 1; // Poiché il processo può essere negativo
+            var yRange = yMax - yMin;
+            var yScale = plotHeight / yRange;
+
+            // Zero al centro
+            var yZero = marginTop + plotHeight - (-yMin * yScale);
+
+            // Disegna l'asse Y a x = marginLeft
+            ctx.beginPath();
+            ctx.moveTo(marginLeft, marginTop);
+            ctx.lineTo(marginLeft, marginTop + plotHeight);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Disegna l'asse X a y = yZero
+            ctx.beginPath();
+            ctx.moveTo(marginLeft, yZero);
+            ctx.lineTo(marginLeft + plotWidth, yZero);
+            ctx.stroke();
+
+            // Disegna le etichette dell'asse Y
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.font = '12px Arial';
+            var yLabelStep = yRange / 10;
+            for (var yValue = yMin; yValue <= yMax; yValue += yLabelStep) {
+                var yPos = yZero - (yValue - 0) * yScale;
+                ctx.beginPath();
+                ctx.moveTo(marginLeft - 5, yPos);
+                ctx.lineTo(marginLeft, yPos);
+                ctx.stroke();
+                ctx.fillText(yValue.toFixed(2), marginLeft - 10, yPos);
+            }
+
+            // Disegna le traiettorie come linee
+            for (var sim = 0; sim < n; sim++) {
+                ctx.strokeStyle = colors[sim];
+                ctx.beginPath();
+                var xPrev = marginLeft;
+                var yPrev = yZero - (trajectories[sim][0]) * yScale;
+                ctx.moveTo(xPrev, yPrev);
+
+                for (var step = 1; step <= m; step++) {
+                    var xCurr = marginLeft + step * xStep;
+                    var yCurr = yZero - (trajectories[sim][step]) * yScale;
+
+                    ctx.lineTo(xCurr, yCurr);
+
+                    xPrev = xCurr;
+                    yPrev = yCurr;
+                }
+                ctx.stroke();
+            }
+
+            // Disegna l'istogramma della distribuzione finale
+            var xStartFinalHistogram = marginLeft + plotWidth + 10;
+            var histogramWidth = marginRight - 20;
+            drawHistogram(ctx, finalValues, xStartFinalHistogram, marginTop, histogramWidth, plotHeight, yScale, yMin, yMax);
+
+            // Disegna l'istogramma della distribuzione intermedia al passo k
+            var xAtK = marginLeft + k * xStep;
+            var histogramWidthAtK = 0.15 * plotWidth;
+            drawHistogramAtK(ctx, intermediateValues, xAtK + 5, marginTop, histogramWidthAtK, plotHeight, yScale, yMin, yMax);
+
+            // Mostra media e varianza al passo k
+            ctx.fillStyle = 'black';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            var textX_k = xAtK + histogramWidthAtK / 2;
+            var textY_k = marginTop + plotHeight + 20;
+            ctx.fillText('Mean at k: ' + mean_k.toFixed(4), textX_k, textY_k);
+            ctx.fillText('Variance at k: ' + variance_k.toFixed(6), textX_k, textY_k + 15);
+
+            // Mostra media e varianza per i valori finali sotto l'istogramma finale
+            ctx.fillStyle = 'black';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            var textX_final = xStartFinalHistogram + histogramWidth / 2;
+            var textY_final = marginTop + plotHeight + 20;
+            ctx.fillText('Mean: ' + mean.toFixed(4), textX_final, textY_final);
+            ctx.fillText('Variance: ' + variance.toFixed(6), textX_final, textY_final + 15);
+        }
+
+        function drawHistogram(ctx, data, xStart, yStart, histogramWidth, plotHeight, yScale, yMin, yMax) {
+            // Calcola il numero di bin in base alla larghezza desiderata delle barre
+            var desiredBarWidth = 2; // Larghezza desiderata delle barre in pixel
+            var numberOfBins = Math.floor(plotHeight / desiredBarWidth);
+
+            // Calcola la larghezza dei bin
+            var binWidth = (yMax - yMin) / numberOfBins;
+            var frequencies = new Array(numberOfBins).fill(0);
+
+            data.forEach(function(value) {
+                var bin = Math.floor((value - yMin) / binWidth);
+                if (bin >= 0 && bin < numberOfBins) {
+                    frequencies[bin]++;
+                }
+            });
+
+            // Trova la frequenza massima
+            var maxFrequency = Math.max.apply(null, frequencies);
+
+            // Disegna l'istogramma
+            for (var i = 0; i < numberOfBins; i++) {
+                var freq = frequencies[i];
+                var y = yStart + plotHeight - ((yMin + i * binWidth - yMin) * yScale);
+                var barHeight = binWidth * yScale;
+                var barLength = (freq / maxFrequency) * histogramWidth;
+                var x = xStart;
+
+                ctx.fillStyle = 'skyblue';
+                ctx.fillRect(x, y - barHeight / 2, barLength, barHeight);
+                ctx.strokeStyle = 'black';
+                ctx.strokeRect(x, y - barHeight / 2, barLength, barHeight);
+            }
+        }
+
+        function drawHistogramAtK(ctx, data, xStart, yStart, histogramWidth, plotHeight, yScale, yMin, yMax) {
+            // Calcola il numero di bin in base alla larghezza desiderata delle barre
+            var desiredBarWidth = 2; // Larghezza desiderata delle barre in pixel
+            var numberOfBins = Math.floor(plotHeight / desiredBarWidth);
+
+            // Calcola la larghezza dei bin
+            var binWidth = (yMax - yMin) / numberOfBins;
+            var frequencies = new Array(numberOfBins).fill(0);
+
+            data.forEach(function(value) {
+                var bin = Math.floor((value - yMin) / binWidth);
+                if (bin >= 0 && bin < numberOfBins) {
+                    frequencies[bin]++;
+                }
+            });
+
+            // Trova la frequenza massima
+            var maxFrequency = Math.max.apply(null, frequencies);
+
+            // Disegna l'istogramma
+            for (var i = 0; i < numberOfBins; i++) {
+                var freq = frequencies[i];
+                var y = yStart + plotHeight - ((yMin + i * binWidth - yMin) * yScale);
+                var barHeight = binWidth * yScale;
+                var barLength = (freq / maxFrequency) * histogramWidth;
+                var x = xStart;
+
+                ctx.fillStyle = 'lightgreen';
+                ctx.fillRect(x, y - barHeight / 2, barLength, barHeight);
+                ctx.strokeStyle = 'black';
+                ctx.strokeRect(x, y - barHeight / 2, barLength, barHeight);
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
