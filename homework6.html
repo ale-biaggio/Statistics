@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Simulatore di Distribuzione di Probabilità</title>
+    <title>Probability Distribution Simulator</title>
     <!-- Include MathJax for LaTeX rendering -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async
@@ -23,7 +23,7 @@
             font-size: 19px;
             line-height: 28px;
             color: #1c1c1c;
-            background-color: #ffffff; /* White background */
+            background-color: #ffffff;
         }
         h1 {
             font-size: 36px;
@@ -67,9 +67,9 @@
             transition: box-shadow 0.3s ease;
             font-family: 'Montserrat', sans-serif;
             font-weight: bold;
-            border-radius: 20px; /* Bottone più arrotondato */
-            font-size: 18px; /* Ridotto il font size */
-            padding: 12px 25px; /* Ridotto il padding */
+            border-radius: 20px;
+            font-size: 18px;
+            padding: 12px 25px;
             cursor: pointer;
         }
         .btn-custom:hover {
@@ -131,8 +131,8 @@
             flex-direction: column;
             align-items: center;
             flex-grow: 1;
-            height: 100%; /* Assicura che riempia il contenitore genitore */
-            justify-content: center; /* Centra verticalmente il contenuto */
+            height: 100%;
+            justify-content: center;
         }
         .stats-header {
             font-weight: bold;
@@ -148,7 +148,7 @@
             display: flex;
             flex-wrap: wrap;
             align-items: stretch;
-            margin-top: 50px; /* Aumentato lo spazio sopra il grafico */
+            margin-top: 50px;
         }
         .graph-container {
             flex: 0 0 90%;
@@ -183,8 +183,6 @@
             height: 400px !important;
             margin: 0 auto;
             display: block;
-            /* border: 2px solid #dee2e6; */ /* Bordo rimosso */
-            /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */ /* Ombra rimossa */
             margin-bottom: 30px;
         }
         /* Controls styling */
@@ -212,41 +210,41 @@
 <body>
     <div class="container mt-5">
         <!-- Research Content -->
-        <h2>Teorema Fondamentale del Calcolo e la Sua Relazione con le Funzioni di Densità e le CDF</h2>
-        <p>Il Teorema Fondamentale del Calcolo collega la derivazione e l'integrazione, fornendo un modo per valutare gli integrali definiti. Afferma che se \( f \) è continua nell'intervallo \([a, b]\) e \( F \) è una primitiva di \( f \) su \([a, b]\), allora:</p>
+        <h2>Fundamental Theorem of Calculus and Its Relationship with Density Functions and CDFs</h2>
+        <p>The Fundamental Theorem of Calculus connects differentiation and integration, providing a way to evaluate definite integrals. It states that if \( f \) is continuous on the interval \([a, b]\) and \( F \) is an antiderivative of \( f \) on \([a, b]\), then:</p>
         \[
         \int_a^b f(x) \, dx = F(b) - F(a)
         \]
-        <p>In teoria delle probabilità, la funzione di distribuzione cumulativa (CDF) \( F(x) \) di una variabile casuale continua è definita come:</p>
+        <p>In probability theory, the cumulative distribution function (CDF) \( F(x) \) of a continuous random variable is defined as:</p>
         \[
         F(x) = \int_{-\infty}^x f(t) \, dt
         \]
-        <p>dove \( f(t) \) è la funzione di densità di probabilità (PDF). La relazione tra la PDF e la CDF rispecchia il Teorema Fondamentale del Calcolo, poiché la derivata della CDF fornisce la PDF:</p>
+        <p>where \( f(t) \) is the probability density function (PDF). The relationship between the PDF and CDF mirrors the Fundamental Theorem of Calculus, as the derivative of the CDF yields the PDF:</p>
         \[
         f(x) = \frac{d}{dx} F(x)
         \]
-        <p>Ciò illustra come il Teorema Fondamentale del Calcolo sottenda la connessione tra funzioni di densità e funzioni di distribuzione cumulativa nella teoria delle probabilità.</p>
-        <h1>Simulatore di Distribuzione di Probabilità</h1>
+        <p>This illustrates how the Fundamental Theorem of Calculus underpins the connection between density functions and cumulative distribution functions in probability theory.</p>
+        <h1>Probability Distribution Simulator</h1>
         <!-- Instructions -->
-        <p>Questo simulatore genera campioni da una distribuzione di probabilità univariata discreta con probabilità arbitrarie. Mostra la convergenza della distribuzione empirica alla distribuzione teorica man mano che la dimensione del campione aumenta. Calcola anche media e varianza utilizzando l'algoritmo di Welford e le confronta con i valori teorici.</p>
+        <p>This simulator generates samples from a discrete univariate probability distribution with arbitrary probabilities. It shows the convergence of the empirical distribution to the theoretical distribution as the sample size increases. It also computes mean and variance using Welford's algorithm and compares them with the theoretical values.</p>
         <!-- Inputs Container -->
         <div class="inputs-container mt-4">
             <div class="inputs-row">
                 <!-- Number of Intervals -->
                 <div class="input-item text-center">
-                    <div class="step-label">1. Inserisci il numero di intervalli:</div>
+                    <div class="step-label">1. Enter the Number of Intervals:</div>
                     <input class="form-control d-inline-block" type="number" id="numIntervals" value="5" min="1">
                 </div>
                 <!-- Adjust Probabilities -->
                 <div class="input-item text-center">
-                    <div class="step-label">2. Regola le probabilità (devono sommare a 1):</div>
+                    <div class="step-label">2. Adjust Probabilities (they must sum to 1):</div>
                     <div class="probabilities mt-2">
                         <!-- The probabilities form will be generated here -->
                     </div>
                 </div>
                 <!-- Number of Samples -->
                 <div class="input-item text-center">
-                    <div class="step-label">3. Inserisci il numero di campioni:</div>
+                    <div class="step-label">3. Enter Number of Samples:</div>
                     <input class="form-control d-inline-block" type="number" id="attemptsInput" value="1000" min="1">
                 </div>
             </div>
@@ -272,8 +270,7 @@
         </div>
     </div>
 
-    <!-- Include Bootstrap JS dependencies -->
-    <!-- (Removed Bootstrap dependencies as they are not used) -->
+    <!-- JavaScript Code -->
     <script>
         window.onload = function() {
             var distributionChart; // Chart instance for the combined histogram
@@ -301,7 +298,7 @@
             // Event listener for start simulation button
             document.getElementById("startSimulation").onclick = function() {
                 if (!checkSum()) {
-                    alert('Assicurati che le probabilità sommino a 1.');
+                    alert('Please ensure the probabilities sum to 1.');
                     return;
                 }
                 startSimulation();
@@ -315,7 +312,7 @@
             function generateProbabilities(){
                 var numIntervals = parseInt(numIntervalsInput.value);
                 if (isNaN(numIntervals) || numIntervals <= 0) {
-                    alert('Inserisci un numero valido di intervalli.');
+                    alert('Please enter a valid number of intervals.');
                     return;
                 }
 
@@ -420,7 +417,7 @@
                 }
                 total = parseFloat(total.toFixed(2));
                 if (!valid || Math.abs(total - 1) > 0.01) {
-                    invalidMessage.innerHTML = 'Valori non validi: le probabilità devono sommare a 1.';
+                    invalidMessage.innerHTML = 'Invalid values: probabilities must sum to 1.';
                     return false;
                 } else {
                     invalidMessage.innerHTML = '';
@@ -438,32 +435,32 @@
                 // Samples Header
                 var samplesHeader = document.createElement('div');
                 samplesHeader.classList.add('stats-header');
-                samplesHeader.innerText = 'Campioni: ' + n;
+                samplesHeader.innerText = 'Samples: ' + n;
                 statsContainer.appendChild(samplesHeader);
 
                 // Theoretical Mean
                 var theoreticalMeanDiv = document.createElement('div');
                 theoreticalMeanDiv.classList.add('stats-value');
-                theoreticalMeanDiv.innerText = 'Media Teorica: ' + theoreticalMean.toFixed(2);
+                theoreticalMeanDiv.innerText = 'Theoretical Mean: ' + theoreticalMean.toFixed(2);
                 statsContainer.appendChild(theoreticalMeanDiv);
 
                 // Empirical Mean
                 var empiricalMeanDiv = document.createElement('div');
                 empiricalMeanDiv.classList.add('stats-value');
-                empiricalMeanDiv.innerText = 'Media Empirica: ' + mean.toFixed(2);
+                empiricalMeanDiv.innerText = 'Empirical Mean: ' + mean.toFixed(2);
                 empiricalMeanDiv.id = 'empiricalMeanDiv';
                 statsContainer.appendChild(empiricalMeanDiv);
 
                 // Theoretical Variance
                 var theoreticalVarianceDiv = document.createElement('div');
                 theoreticalVarianceDiv.classList.add('stats-value');
-                theoreticalVarianceDiv.innerText = 'Varianza Teorica: ' + theoreticalVariance.toFixed(2);
+                theoreticalVarianceDiv.innerText = 'Theoretical Variance: ' + theoreticalVariance.toFixed(2);
                 statsContainer.appendChild(theoreticalVarianceDiv);
 
                 // Empirical Variance
                 var empiricalVarianceDiv = document.createElement('div');
                 empiricalVarianceDiv.classList.add('stats-value');
-                empiricalVarianceDiv.innerText = 'Varianza Empirica: ' + variance.toFixed(2);
+                empiricalVarianceDiv.innerText = 'Empirical Variance: ' + variance.toFixed(2);
                 empiricalVarianceDiv.id = 'empiricalVarianceDiv';
                 statsContainer.appendChild(empiricalVarianceDiv);
 
@@ -475,22 +472,21 @@
             function updateEmpiricalStats(n, mean, variance) {
                 // Update samples header
                 var samplesHeader = statsDiv.querySelector('.stats-header');
-                samplesHeader.innerText = 'Campioni: ' + n;
+                samplesHeader.innerText = 'Samples: ' + n;
 
                 // Update empirical mean and variance
                 var empiricalMeanDiv = document.getElementById('empiricalMeanDiv');
                 var empiricalVarianceDiv = document.getElementById('empiricalVarianceDiv');
 
-                empiricalMeanDiv.innerText = 'Media Empirica: ' + mean.toFixed(2);
-                empiricalVarianceDiv.innerText = 'Varianza Empirica: ' + variance.toFixed(2);
+                empiricalMeanDiv.innerText = 'Empirical Mean: ' + mean.toFixed(2);
+                empiricalVarianceDiv.innerText = 'Empirical Variance: ' + variance.toFixed(2);
             }
 
             function initializeChart() {
                 var numIntervals = parseInt(numIntervalsInput.value);
-                var attempts = parseInt(attemptsInput.value);
                 labels = [];
                 for (var i = 0; i < numIntervals; i++) {
-                    labels.push('Intervallo ' + (i + 1));
+                    labels.push('Interval ' + (i + 1));
                 }
 
                 // Initialize counts and theoreticalCounts with zeros
@@ -507,7 +503,7 @@
 
                 // Initialize datasets with zeros
                 var theoreticalDataset = {
-                    label: 'Conteggi Teorici',
+                    label: 'Theoretical Counts',
                     data: theoreticalCounts.slice(),
                     backgroundColor: '#095f7a',
                     borderColor: '#074a5e',
@@ -515,7 +511,7 @@
                     order: 1
                 };
                 var empiricalDataset = {
-                    label: 'Conteggi Empirici',
+                    label: 'Empirical Counts',
                     data: counts.slice(),
                     backgroundColor: 'rgba(255, 182, 193, 0.6)', // Pastel Pink
                     borderColor: 'rgba(255, 182, 193, 1)',
@@ -534,20 +530,19 @@
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                title: { display: true, text: 'Frequenza' },
+                                title: { display: true, text: 'Frequency' },
                                 ticks: {
                                     display: true,
                                     callback: function(value) {
                                         return value; // Show actual numbers
                                     }
                                 },
-                                // max: maxYValue, // Rimosso per permettere il ridimensionamento dinamico
                                 grid: {
                                     display: true
                                 }
                             },
                             x: {
-                                title: { display: true, text: 'Intervalli' },
+                                title: { display: true, text: 'Intervals' },
                                 stacked: false
                             }
                         },
@@ -581,7 +576,7 @@
             function startSimulation() {
                 var attempts = parseInt(attemptsInput.value);
                 if (isNaN(attempts) || attempts <= 0) {
-                    alert('Inserisci un numero valido di campioni.');
+                    alert('Please enter a valid number of samples.');
                     return;
                 }
 
@@ -598,7 +593,7 @@
                 // Prepare labels
                 labels = [];
                 for (var i = 0; i < inputs.length; i++) {
-                    labels.push('Intervallo ' + (i + 1));
+                    labels.push('Interval ' + (i + 1));
                 }
 
                 // Initialize empirical counts to zeros
@@ -645,8 +640,6 @@
                 var intervalTime = 16.67; // Frame time in milliseconds (approx. 60 frames per second)
                 var totalIntervals = Math.ceil(totalDuration / intervalTime);
                 var batchSize = Math.ceil(attempts / totalIntervals);
-
-                var processedSamples = 0;
 
                 var interval = setInterval(function() {
                     if (n >= attempts) {
