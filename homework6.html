@@ -2,28 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Probability Distribution Simulator</title>
-    <!-- Include Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Simulatore di Distribuzione di Probabilità</title>
+    <!-- Include MathJax for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
     <!-- Include Chart.js library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Include MathJax for LaTeX rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Include Montserrat font -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <!-- Custom CSS for styling -->
     <style>
-        body {
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 19px;
+            line-height: 28px;
+            color: #1c1c1c;
             background-color: #ffffff; /* White background */
         }
-        h1, p {
-            color: #343a40;
+        h1 {
+            font-size: 36px;
+            color: #095f7a;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 24px;
+            color: #095f7a;
+            font-weight: bold;
+            margin-top: 40px;
+            text-align: center;
+        }
+        p {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        strong {
+            font-weight: bold;
+        }
+        .container {
+            text-align: center;
+            margin: 0 auto;
+            max-width: 1200px;
         }
         .step-label {
             font-weight: bold;
-            margin-bottom: 5px; /* Reduced margin */
+            margin-bottom: 5px;
             color: #495057;
         }
         .form-control {
-            max-width: 200px; /* Reduced width */
+            max-width: 200px;
             margin: 0 auto;
         }
         .btn-custom {
@@ -31,6 +65,12 @@
             color: white !important;
             border: none;
             transition: box-shadow 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: bold;
+            border-radius: 20px; /* Bottone più arrotondato */
+            font-size: 18px; /* Ridotto il font size */
+            padding: 12px 25px; /* Ridotto il padding */
+            cursor: pointer;
         }
         .btn-custom:hover {
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -55,14 +95,14 @@
             margin: 10px;
         }
         .inputs-container .form-control {
-            max-width: 200px; /* Reduced width for uniformity */
+            max-width: 200px;
             width: 100%;
         }
         /* Adjust probabilities styling */
         .probabilities {
             overflow-x: auto;
             margin: 0 auto;
-            max-width: 400px; /* Increased width to accommodate larger inputs */
+            max-width: 400px;
         }
         .probabilities .prob-inputs {
             display: inline-block;
@@ -77,7 +117,7 @@
             margin-right: 5px;
         }
         .probabilities input[type="number"] {
-            width: 80px; /* Increased width */
+            width: 80px;
             display: inline-block;
         }
         #invalidMessage {
@@ -91,7 +131,8 @@
             flex-direction: column;
             align-items: center;
             flex-grow: 1;
-            height: 100%; /* Ensure it fills the parent container */
+            height: 100%; /* Assicura che riempia il contenitore genitore */
+            justify-content: center; /* Centra verticalmente il contenuto */
         }
         .stats-header {
             font-weight: bold;
@@ -102,23 +143,12 @@
             font-size: 1em;
             margin: 5px 0;
         }
-        /* Content before the simulator */
-        .research-content {
-            margin-bottom: 20px; /* Reduced margin */
-        }
-        .research-content h2 {
-            color: #343a40;
-            margin-bottom: 15px;
-        }
-        .research-content p {
-            color: #343a40;
-            font-size: 1.1em;
-        }
         /* New styles for graph and stats layout */
         .graph-and-stats {
             display: flex;
             flex-wrap: wrap;
-            align-items: stretch; /* Align items to fill height */
+            align-items: stretch;
+            margin-top: 50px; /* Aumentato lo spazio sopra il grafico */
         }
         .graph-container {
             flex: 0 0 90%;
@@ -126,6 +156,7 @@
             position: relative;
             display: flex;
             flex-direction: column;
+            height: auto;
         }
         .stats-table-container {
             flex: 0 0 10%;
@@ -133,59 +164,89 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            height: auto;
         }
-        @media (max-width: 767.98px) {
+        @media (max-width: 1000px) {
             .graph-container, .stats-table-container {
                 flex: 0 0 100%;
                 max-width: 100%;
             }
+            .controls {
+                flex-wrap: wrap;
+            }
+            .btn-custom {
+                margin-top: 10px;
+            }
         }
         .graph-container canvas {
-            width: 100% !important;
-            height: auto !important;
+            width: 98% !important;
+            height: 400px !important;
+            margin: 0 auto;
+            display: block;
+            /* border: 2px solid #dee2e6; */ /* Bordo rimosso */
+            /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */ /* Ombra rimossa */
+            margin-bottom: 30px;
+        }
+        /* Controls styling */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+        .controls label {
+            margin: 0 5px 0 0;
+        }
+        .controls input {
+            width: 100px;
+            margin-right: 10px;
+        }
+        .controls button {
+            margin-left: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container mt-5">
         <!-- Research Content -->
-        <div class="research-content">
-            <h2 class="text-center">Fundamental Theorem of Calculus and Its Relationship with Density Functions and CDFs</h2>
-            <p>The Fundamental Theorem of Calculus connects differentiation and integration, providing a way to evaluate definite integrals. It states that if \( f \) is continuous on the interval \([a, b]\) and \( F \) is an antiderivative of \( f \) on \([a, b]\), then:</p>
-            \[
-            \int_a^b f(x) \, dx = F(b) - F(a)
-            \]
-            <p>In probability theory, the cumulative distribution function (CDF) \( F(x) \) of a continuous random variable is defined as:</p>
-            \[
-            F(x) = \int_{-\infty}^x f(t) \, dt
-            \]
-            <p>where \( f(t) \) is the probability density function (PDF). The relationship between the PDF and CDF mirrors the Fundamental Theorem of Calculus, as the derivative of the CDF yields the PDF:</p>
-            \[
-            f(x) = \frac{d}{dx} F(x)
-            \]
-            <p>This illustrates how the Fundamental Theorem of Calculus underpins the connection between density functions and cumulative distribution functions in probability theory.</p>
-        </div>
-        <h1 class="text-center mb-4">Probability Distribution Simulator</h1>
+        <h2>Teorema Fondamentale del Calcolo e la Sua Relazione con le Funzioni di Densità e le CDF</h2>
+        <p>Il Teorema Fondamentale del Calcolo collega la derivazione e l'integrazione, fornendo un modo per valutare gli integrali definiti. Afferma che se \( f \) è continua nell'intervallo \([a, b]\) e \( F \) è una primitiva di \( f \) su \([a, b]\), allora:</p>
+        \[
+        \int_a^b f(x) \, dx = F(b) - F(a)
+        \]
+        <p>In teoria delle probabilità, la funzione di distribuzione cumulativa (CDF) \( F(x) \) di una variabile casuale continua è definita come:</p>
+        \[
+        F(x) = \int_{-\infty}^x f(t) \, dt
+        \]
+        <p>dove \( f(t) \) è la funzione di densità di probabilità (PDF). La relazione tra la PDF e la CDF rispecchia il Teorema Fondamentale del Calcolo, poiché la derivata della CDF fornisce la PDF:</p>
+        \[
+        f(x) = \frac{d}{dx} F(x)
+        \]
+        <p>Ciò illustra come il Teorema Fondamentale del Calcolo sottenda la connessione tra funzioni di densità e funzioni di distribuzione cumulativa nella teoria delle probabilità.</p>
+        <h1>Simulatore di Distribuzione di Probabilità</h1>
         <!-- Instructions -->
-        <p class="text-center">This simulator generates samples from a discrete univariate probability distribution with arbitrary probabilities. It shows the convergence of the empirical distribution to the theoretical distribution as the sample size increases. It also computes mean and variance using Welford's algorithm and compares them with the theoretical values.</p>
+        <p>Questo simulatore genera campioni da una distribuzione di probabilità univariata discreta con probabilità arbitrarie. Mostra la convergenza della distribuzione empirica alla distribuzione teorica man mano che la dimensione del campione aumenta. Calcola anche media e varianza utilizzando l'algoritmo di Welford e le confronta con i valori teorici.</p>
         <!-- Inputs Container -->
         <div class="inputs-container mt-4">
             <div class="inputs-row">
                 <!-- Number of Intervals -->
                 <div class="input-item text-center">
-                    <div class="step-label">1. Enter the Number of Intervals:</div>
+                    <div class="step-label">1. Inserisci il numero di intervalli:</div>
                     <input class="form-control d-inline-block" type="number" id="numIntervals" value="5" min="1">
                 </div>
                 <!-- Adjust Probabilities -->
                 <div class="input-item text-center">
-                    <div class="step-label">2. Adjust Probabilities (they must sum to 1):</div>
+                    <div class="step-label">2. Regola le probabilità (devono sommare a 1):</div>
                     <div class="probabilities mt-2">
                         <!-- The probabilities form will be generated here -->
                     </div>
                 </div>
                 <!-- Number of Samples -->
                 <div class="input-item text-center">
-                    <div class="step-label">3. Enter Number of Samples:</div>
+                    <div class="step-label">3. Inserisci il numero di campioni:</div>
                     <input class="form-control d-inline-block" type="number" id="attemptsInput" value="1000" min="1">
                 </div>
             </div>
@@ -197,16 +258,14 @@
             <button class="btn btn-custom" id="startSimulation">Start Simulation</button>
         </div>
         <!-- Combined Histogram and Stats -->
-        <div class="graph-and-stats mt-4">
+        <div class="graph-and-stats">
             <!-- Graph -->
             <div class="graph-container">
-                <div style="height: 100%; position: relative;">
-                    <canvas id="distributionChart"></canvas>
-                </div>
+                <canvas id="distributionChart"></canvas>
             </div>
             <!-- Stats -->
             <div class="stats-table-container">
-                <div id="stats" class="text-center">
+                <div id="stats" class="stats-container">
                     <!-- Mean and variance will be displayed here -->
                 </div>
             </div>
@@ -214,11 +273,7 @@
     </div>
 
     <!-- Include Bootstrap JS dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <!-- Popper.js is required for Bootstrap JS components -->
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <!-- Include Bootstrap JS -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- (Removed Bootstrap dependencies as they are not used) -->
     <script>
         window.onload = function() {
             var distributionChart; // Chart instance for the combined histogram
@@ -246,7 +301,7 @@
             // Event listener for start simulation button
             document.getElementById("startSimulation").onclick = function() {
                 if (!checkSum()) {
-                    alert('Please ensure the probabilities sum to 1.');
+                    alert('Assicurati che le probabilità sommino a 1.');
                     return;
                 }
                 startSimulation();
@@ -260,7 +315,7 @@
             function generateProbabilities(){
                 var numIntervals = parseInt(numIntervalsInput.value);
                 if (isNaN(numIntervals) || numIntervals <= 0) {
-                    alert('Please enter a valid number of intervals.');
+                    alert('Inserisci un numero valido di intervalli.');
                     return;
                 }
 
@@ -365,7 +420,7 @@
                 }
                 total = parseFloat(total.toFixed(2));
                 if (!valid || Math.abs(total - 1) > 0.01) {
-                    invalidMessage.innerHTML = 'Invalid values: probabilities must sum to 1.';
+                    invalidMessage.innerHTML = 'Valori non validi: le probabilità devono sommare a 1.';
                     return false;
                 } else {
                     invalidMessage.innerHTML = '';
@@ -377,37 +432,38 @@
                 // Create stats container
                 statsDiv.innerHTML = '';
                 var statsContainer = document.createElement('div');
-                statsContainer.classList.add('stats-container');
+                statsContainer.classList.add('stats-content');
+                statsContainer.style.height = '100%'; // Ensure it fills the parent container
 
                 // Samples Header
                 var samplesHeader = document.createElement('div');
                 samplesHeader.classList.add('stats-header');
-                samplesHeader.innerText = 'Samples: ' + n;
+                samplesHeader.innerText = 'Campioni: ' + n;
                 statsContainer.appendChild(samplesHeader);
 
                 // Theoretical Mean
                 var theoreticalMeanDiv = document.createElement('div');
                 theoreticalMeanDiv.classList.add('stats-value');
-                theoreticalMeanDiv.innerText = 'Theoretical Mean: ' + theoreticalMean.toFixed(2);
+                theoreticalMeanDiv.innerText = 'Media Teorica: ' + theoreticalMean.toFixed(2);
                 statsContainer.appendChild(theoreticalMeanDiv);
 
                 // Empirical Mean
                 var empiricalMeanDiv = document.createElement('div');
                 empiricalMeanDiv.classList.add('stats-value');
-                empiricalMeanDiv.innerText = 'Empirical Mean: ' + mean.toFixed(2);
+                empiricalMeanDiv.innerText = 'Media Empirica: ' + mean.toFixed(2);
                 empiricalMeanDiv.id = 'empiricalMeanDiv';
                 statsContainer.appendChild(empiricalMeanDiv);
 
                 // Theoretical Variance
                 var theoreticalVarianceDiv = document.createElement('div');
                 theoreticalVarianceDiv.classList.add('stats-value');
-                theoreticalVarianceDiv.innerText = 'Theoretical Variance: ' + theoreticalVariance.toFixed(2);
+                theoreticalVarianceDiv.innerText = 'Varianza Teorica: ' + theoreticalVariance.toFixed(2);
                 statsContainer.appendChild(theoreticalVarianceDiv);
 
                 // Empirical Variance
                 var empiricalVarianceDiv = document.createElement('div');
                 empiricalVarianceDiv.classList.add('stats-value');
-                empiricalVarianceDiv.innerText = 'Empirical Variance: ' + variance.toFixed(2);
+                empiricalVarianceDiv.innerText = 'Varianza Empirica: ' + variance.toFixed(2);
                 empiricalVarianceDiv.id = 'empiricalVarianceDiv';
                 statsContainer.appendChild(empiricalVarianceDiv);
 
@@ -419,14 +475,14 @@
             function updateEmpiricalStats(n, mean, variance) {
                 // Update samples header
                 var samplesHeader = statsDiv.querySelector('.stats-header');
-                samplesHeader.innerText = 'Samples: ' + n;
+                samplesHeader.innerText = 'Campioni: ' + n;
 
                 // Update empirical mean and variance
                 var empiricalMeanDiv = document.getElementById('empiricalMeanDiv');
                 var empiricalVarianceDiv = document.getElementById('empiricalVarianceDiv');
 
-                empiricalMeanDiv.innerText = 'Empirical Mean: ' + mean.toFixed(2);
-                empiricalVarianceDiv.innerText = 'Empirical Variance: ' + variance.toFixed(2);
+                empiricalMeanDiv.innerText = 'Media Empirica: ' + mean.toFixed(2);
+                empiricalVarianceDiv.innerText = 'Varianza Empirica: ' + variance.toFixed(2);
             }
 
             function initializeChart() {
@@ -434,7 +490,7 @@
                 var attempts = parseInt(attemptsInput.value);
                 labels = [];
                 for (var i = 0; i < numIntervals; i++) {
-                    labels.push('Interval ' + (i + 1));
+                    labels.push('Intervallo ' + (i + 1));
                 }
 
                 // Initialize counts and theoreticalCounts with zeros
@@ -446,15 +502,12 @@
                     distributionChart.destroy();
                 }
 
-                // Calculate maximum y-axis value based on maximum possible count
-                var maxYValue = attempts * 1.1; // Add 10% headroom
-
                 // Create the chart with empty datasets
                 var distributionCtx = document.getElementById('distributionChart').getContext('2d');
 
                 // Initialize datasets with zeros
                 var theoreticalDataset = {
-                    label: 'Theoretical Counts',
+                    label: 'Conteggi Teorici',
                     data: theoreticalCounts.slice(),
                     backgroundColor: '#095f7a',
                     borderColor: '#074a5e',
@@ -462,7 +515,7 @@
                     order: 1
                 };
                 var empiricalDataset = {
-                    label: 'Empirical Counts',
+                    label: 'Conteggi Empirici',
                     data: counts.slice(),
                     backgroundColor: 'rgba(255, 182, 193, 0.6)', // Pastel Pink
                     borderColor: 'rgba(255, 182, 193, 1)',
@@ -481,20 +534,20 @@
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                title: { display: true, text: 'Frequency' },
+                                title: { display: true, text: 'Frequenza' },
                                 ticks: {
                                     display: true,
                                     callback: function(value) {
                                         return value; // Show actual numbers
                                     }
                                 },
-                                max: maxYValue, // Set fixed maximum y-axis value
+                                // max: maxYValue, // Rimosso per permettere il ridimensionamento dinamico
                                 grid: {
                                     display: true
                                 }
                             },
                             x: {
-                                title: { display: true, text: 'Intervals' },
+                                title: { display: true, text: 'Intervalli' },
                                 stacked: false
                             }
                         },
@@ -528,7 +581,7 @@
             function startSimulation() {
                 var attempts = parseInt(attemptsInput.value);
                 if (isNaN(attempts) || attempts <= 0) {
-                    alert('Please enter a valid number of samples.');
+                    alert('Inserisci un numero valido di campioni.');
                     return;
                 }
 
@@ -545,7 +598,7 @@
                 // Prepare labels
                 labels = [];
                 for (var i = 0; i < inputs.length; i++) {
-                    labels.push('Interval ' + (i + 1));
+                    labels.push('Intervallo ' + (i + 1));
                 }
 
                 // Initialize empirical counts to zeros
