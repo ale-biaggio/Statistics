@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Probability Distribution Simulator</title>
+    <!-- Include Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include Montserrat font -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS for styling -->
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 19px;
+            line-height: 28px;
+            color: #1c1c1c;
+            background-color: #ffffff;
+        }
+        h1 {
+            font-size: 36px;
+            color: #095f7a;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 24px;
+            color: #095f7a;
+            font-weight: bold;
+            margin-top: 40px;
+            text-align: center;
+        }
+        p {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        strong {
+            font-weight: bold;
+        }
+        .container {
+            text-align: center;
+            margin: 0 auto;
+            max-width: 1200px;
+        }
+        .step-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #095f7a;
+        }
+        .form-control {
+            max-width: 80px;
+            margin: 0 auto;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-custom {
+            background-color: #095f7a;
+            color: white !important;
+            border: none;
+            transition: box-shadow 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: bold;
+            border-radius: 20px;
+            font-size: 18px;
+            padding: 12px 25px;
+            cursor: pointer;
+        }
+        .btn-custom:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: white !important;
+        }
+        /* Style adjustments for inputs */
+        .inputs-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+        }
+        .inputs-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            width: 100%;
+        }
+        .input-item {
+            flex: 0 0 auto;
+            margin: 10px;
+            text-align: center;
+        }
+        .inputs-container .form-control {
+            max-width: 80px;
+            width: 100%;
+        }
+        /* Adjust probabilities styling */
+        .probabilities {
+            overflow-x: auto;
+            overflow-y: hidden;
+            margin: 0 auto;
+            max-width: 200px;
+            white-space: nowrap;
+        }
+        .probabilities .prob-inputs {
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .probabilities .form-group {
+            display: inline-block;
+            vertical-align: middle;
+            margin: 5px;
+        }
+        .probabilities label {
+            margin-right: 5px;
+        }
+        .probabilities input[type="number"] {
+            width: 60px;
+            display: inline-block;
+            text-align: center;
+        }
+        #invalidMessage {
+            color: red;
+            font-weight: bold;
+        }
+        /* Graphs container styling */
+        .graphs-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+        }
+        .graph-section {
+            width: 90%;
+            max-width: 900px;
+            margin-bottom: 50px;
+        }
+        .graph-section h3 {
+            font-size: 24px;
+            color: #095f7a;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .empirical-distributions-container {
+            max-height: 750px; /* Adjust to fit two rows */
+            overflow-y: auto;
+            width: 100%;
+        }
+        .empirical-distributions-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+        }
+        .empirical-distribution-chart {
+            flex: 0 0 30%;
+            max-width: 30%;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+        @media (max-width: 1200px) {
+            .empirical-distribution-chart {
+                flex: 0 0 45%;
+                max-width: 45%;
+            }
+        }
+        @media (max-width: 768px) {
+            .empirical-distribution-chart {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+        }
+        .empirical-distribution-chart canvas {
+            width: 100% !important;
+            height: 300px !important; /* Set fixed height */
+        }
+        .graph-section canvas {
+            width: 100% !important;
+            height: 400px !important;
+        }
+        /* Controls styling */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+        .controls label {
+            margin: 0 5px 0 0;
+        }
+        .controls input {
+            width: 100px;
+            margin-right: 10px;
+        }
+        .controls button {
+            margin-left: 10px;
+        }
+        /* Style for statistics display */
+        .stats-display {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+            color: #095f7a;
+        }
+        .stats-display span {
+            font-weight: bold;
+        }
+        /* Hidden class to hide elements */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <br>
+    <div class="container mt-5">
+        <h1>Probability Distribution Simulator</h1>
+        <!-- Instructions -->
+        <p>This simulator generates <strong>m</strong> samples of size <strong>n</strong> from a discrete univariate probability distribution with arbitrary probabilities. It computes the distribution of the sampling averages and displays the theoretical and empirical distributions.</p>
+        <!-- Inputs Container -->
+        <div class="inputs-container mt-4">
+            <div class="inputs-row">
+                <!-- Number of Intervals -->
+                <div class="input-item text-center">
+                    <div class="step-label">Number of Intervals:</div>
+                    <input class="form-control d-inline-block" type="number" id="numIntervals" value="5" min="1">
+                </div>
+                <!-- Adjust Probabilities -->
+                <div class="input-item text-center">
+                    <div class="step-label">Adjust Probabilities:</div>
+                    <div class="probabilities mt-2">
+                        <!-- The probabilities form will be generated here -->
+                    </div>
+                </div>
+                <!-- Number of Samples (m) -->
+                <div class="input-item text-center">
+                    <div class="step-label">Number of Samples (m):</div>
+                    <input class="form-control d-inline-block" type="number" id="numSamplesInput" value="10" min="1">
+                </div>
+                <!-- Sample Size (n) -->
+                <div class="input-item text-center">
+                    <div class="step-label">Sample Size (n):</div>
+                    <input class="form-control d-inline-block" type="number" id="sampleSizeInput" value="30" min="1">
+                </div>
+                <!-- Start Simulation Button -->
+                <div class="input-item text-center">
+                    <button class="btn btn-custom" id="startSimulation">Start Simulation</button>
+                </div>
+            </div>
+            <!-- Invalid Message -->
+            <div id="invalidMessage" class="text-center mt-2"></div>
+        </div>
+        <!-- Graphs Container -->
+        <div class="graphs-container">
+            <!-- Theoretical Mean and Variance Display -->
+            <div class="stats-display hidden" id="theoreticalStatsDisplay">
+                <!-- Theoretical Mean and Variance will be displayed here -->
+            </div>
+            <!-- Mean and Variance Display -->
+            <div class="stats-display hidden" id="statsDisplay">
+                <!-- Mean of Means and Mean of Variances will be displayed here -->
+            </div>
+            <!-- Mean of Means Graph -->
+            <div class="graph-section hidden" id="meanOfMeansSection">
+                <h3>Distribution of Sample Means</h3>
+                <canvas id="meanOfMeansChart"></canvas>
+            </div>
+            <!-- Theoretical Distribution Graph -->
+            <div class="graph-section hidden" id="theoreticalDistributionSection">
+                <h3>Theoretical Distribution</h3>
+                <canvas id="theoreticalDistributionChart"></canvas>
+            </div>
+            <!-- Empirical Distributions -->
+            <div class="graph-section hidden" id="empiricalDistributionsSection">
+                <h3>Empirical Distributions of Samples</h3>
+                <div class="empirical-distributions-container">
+                    <div class="empirical-distributions-grid" id="empiricalDistributionsGrid">
+                        <!-- Empirical distribution charts will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Code -->
+    <script>
+        window.onload = function() {
+            var meanOfMeansChart; // Chart for the sample means
+            var theoreticalDistributionChart; // Chart for theoretical distribution
+            var empiricalDistributionCharts = []; // Charts for empirical distributions
+            var probs = [];
+            var labels = [];
+            var theoreticalMean = 0;
+            var theoreticalVariance = 0;
+            var sampleMeans = [];
+            var sampleVariances = []; // Array to store variances of each sample
+            var sampleCounts = []; // Array of counts for each sample
+            var numSamplesInput = document.getElementById('numSamplesInput'); // m
+            var sampleSizeInput = document.getElementById('sampleSizeInput'); // n
+            var numIntervalsInput = document.getElementById('numIntervals');
+            var inputs;
+            var maxVisibleProbs = 3;
+
+            // Event listener for number of intervals change
+            numIntervalsInput.oninput = function() {
+                generateProbabilities();
+            };
+
+            // Event listener for start simulation button
+            document.getElementById("startSimulation").onclick = function() {
+                if (!checkSum()) {
+                    alert('Please ensure the probabilities sum to 1.');
+                    return;
+                }
+                startSimulation();
+            };
+
+            // Initial calls
+            generateProbabilities();
+
+            function generateProbabilities(){
+                var numIntervals = parseInt(numIntervalsInput.value);
+                if (isNaN(numIntervals) || numIntervals <= 0) {
+                    alert('Please enter a valid number of intervals.');
+                    return;
+                }
+
+                var probabilitiesDiv = document.querySelector('.probabilities');
+                probabilitiesDiv.innerHTML = ''; // Clear previous content
+
+                // Generate random probabilities that sum exactly to 1
+                do {
+                    probs = [];
+                    var total = 0;
+                    for (var i = 0; i < numIntervals; i++) {
+                        var p = Math.random();
+                        probs.push(p);
+                        total += p;
+                    }
+                    // Normalize probabilities
+                    for (var i = 0; i < numIntervals; i++) {
+                        probs[i] = probs[i] / total;
+                        probs[i] = parseFloat(probs[i].toFixed(2)); // Limit to 2 decimal places
+                    }
+                    // Adjust the last probability to ensure the sum is exactly 1
+                    var sumProbs = probs.reduce(function(a, b) { return a + b; }, 0);
+                    var diff = 1 - sumProbs;
+                    probs[numIntervals - 1] += diff;
+                    probs[numIntervals - 1] = parseFloat(probs[numIntervals - 1].toFixed(2));
+
+                    // Adjust any rounding errors
+                    var finalSum = probs.reduce(function(a, b) { return a + b; }, 0);
+                    if (Math.abs(finalSum - 1) > 0.0001) {
+                        probs[numIntervals - 1] += 1 - finalSum;
+                        probs[numIntervals - 1] = parseFloat(probs[numIntervals - 1].toFixed(2));
+                    }
+                    // Ensure probabilities are valid and sum to 1
+                } while (!validateProbabilities(probs));
+
+                // Create inputs for probabilities
+                var probInputsDiv = document.createElement('div');
+                probInputsDiv.classList.add('prob-inputs');
+
+                for (var i = 0; i < numIntervals; i++) {
+                    var div = document.createElement('div');
+                    div.classList.add('form-group');
+                    var label = document.createElement('label');
+                    label.innerHTML = 'p' + (i+1) + ': ';
+                    var input = document.createElement('input');
+                    input.type = 'number';
+                    input.step = '0.01';
+                    input.value = probs[i].toFixed(2);
+                    input.min = '0';
+                    input.max = '1';
+                    input.classList.add('form-control');
+
+                    // Add event listener to check the sum when the value changes
+                    input.oninput = function() {
+                        // Ensure two decimal places
+                        if (this.value !== '') {
+                            this.value = parseFloat(this.value).toFixed(2);
+                        }
+                        checkSum();
+                    };
+
+                    div.appendChild(label);
+                    div.appendChild(input);
+                    probInputsDiv.appendChild(div);
+                }
+                probabilitiesDiv.appendChild(probInputsDiv);
+
+                inputs = probInputsDiv.querySelectorAll('input[type="number"]');
+
+                // Adjust the width of the probabilities container
+                probabilitiesDiv.style.maxWidth = '200px';
+
+                checkSum();
+            }
+
+            function validateProbabilities(probsArray) {
+                var total = probsArray.reduce(function(a, b) { return a + b; }, 0);
+                total = parseFloat(total.toFixed(2));
+                if (Math.abs(total - 1) > 0.0001) {
+                    return false;
+                }
+                for (var i = 0; i < probsArray.length; i++) {
+                    if (probsArray[i] < 0 || probsArray[i] > 1 || isNaN(probsArray[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function checkSum() {
+                var invalidMessage = document.getElementById('invalidMessage');
+                var total = 0;
+                var valid = true;
+                for (var i = 0; i < inputs.length; i++) {
+                    var val = parseFloat(inputs[i].value);
+                    if (isNaN(val) || val < 0 || val > 1) {
+                        valid = false;
+                        break;
+                    }
+                    total += val;
+                }
+                total = parseFloat(total.toFixed(2));
+                if (!valid || Math.abs(total - 1) > 0.01) {
+                    invalidMessage.innerHTML = 'Invalid values: probabilities must sum to 1.';
+                    return false;
+                } else {
+                    invalidMessage.innerHTML = '';
+                    return true;
+                }
+            }
+
+            function startSimulation() {
+                var m = parseInt(numSamplesInput.value); // Number of samples
+                var n = parseInt(sampleSizeInput.value); // Sample size
+                if (isNaN(m) || m <= 0 || isNaN(n) || n <= 0) {
+                    alert('Please enter valid numbers for the number of samples and sample size.');
+                    return;
+                }
+
+                // Get probabilities
+                probs = [];
+                for (var i = 0; i < inputs.length; i++) {
+                    var val = parseFloat(inputs[i].value);
+                    probs.push(val);
+                }
+
+                // Compute theoretical mean and variance
+                theoreticalMean = 0;
+                theoreticalVariance = 0;
+                for (var i = 0; i < probs.length; i++) {
+                    var x = i + 1; // Assuming x_i = i + 1
+                    theoreticalMean += x * probs[i];
+                }
+                for (var i = 0; i < probs.length; i++) {
+                    var x = i + 1;
+                    theoreticalVariance += probs[i] * Math.pow(x - theoreticalMean, 2);
+                }
+
+                // Prepare labels
+                labels = [];
+                for (var i = 0; i < probs.length; i++) {
+                    labels.push('Value ' + (i + 1));
+                }
+
+                // Clear previous sample means, variances, and counts
+                sampleMeans = [];
+                sampleVariances = [];
+                sampleCounts = [];
+
+                // Prepare cumulative probabilities
+                var cumulativeProbs = [];
+                var cumulativeSum = 0;
+                for (var i = 0; i < probs.length; i++) {
+                    cumulativeSum += probs[i];
+                    cumulativeProbs.push(cumulativeSum);
+                }
+
+                // Generate m samples, each of size n
+                for (var i = 0; i < m; i++) {
+                    var sample = [];
+                    var counts = new Array(probs.length).fill(0); // Counts for this sample
+                    for (var j = 0; j < n; j++) {
+                        // Generate one observation
+                        var rand = Math.random();
+                        for (var k = 0; k < cumulativeProbs.length; k++) {
+                            if (rand <= cumulativeProbs[k]) {
+                                var x = k + 1;
+                                sample.push(x);
+                                counts[k]++;
+                                break;
+                            }
+                        }
+                    }
+                    // Compute sample mean
+                    var sampleMean = sample.reduce(function(a, b) { return a + b; }, 0) / n;
+                    sampleMeans.push(parseFloat(sampleMean.toFixed(2))); // Round to 2 decimal places
+
+                    // Compute sample variance
+                    var mean = sampleMean;
+                    var variance = sample.reduce(function(acc, val) {
+                        return acc + Math.pow(val - mean, 2);
+                    }, 0) / (n - 1);
+                    sampleVariances.push(variance);
+
+                    sampleCounts.push(counts);
+                }
+
+                // Compute mean of sample means and mean of sample variances
+                var meanOfMeans = sampleMeans.reduce(function(a, b) { return a + b; }, 0) / m;
+                var meanOfVariances = sampleVariances.reduce(function(a, b) { return a + b; }, 0) / m;
+
+                // Display stats
+                displayTheoreticalStats(theoreticalMean, theoreticalVariance);
+                displayStats(meanOfMeans, meanOfVariances);
+
+                // Update charts
+                updateMeanOfMeansChart();
+                updateTheoreticalDistributionChart();
+                updateEmpiricalDistributions();
+
+                // Show the hidden sections
+                showResults();
+            }
+
+            function displayTheoreticalStats(theoreticalMean, theoreticalVariance) {
+                var theoreticalStatsDisplay = document.getElementById('theoreticalStatsDisplay');
+                theoreticalStatsDisplay.innerHTML = `
+                    Theoretical Mean: <span>${theoreticalMean.toFixed(2)}</span> &nbsp;&nbsp; | &nbsp;&nbsp;
+                    Theoretical Variance: <span>${theoreticalVariance.toFixed(2)}</span>
+                `;
+            }
+
+            function displayStats(meanOfMeans, meanOfVariances) {
+                var statsDisplay = document.getElementById('statsDisplay');
+                statsDisplay.innerHTML = `
+                    Mean of Means: <span>${meanOfMeans.toFixed(2)}</span> &nbsp;&nbsp; | &nbsp;&nbsp;
+                    Mean of Variances: <span>${meanOfVariances.toFixed(2)}</span>
+                `;
+            }
+
+            function updateMeanOfMeansChart() {
+                // Destroy previous chart if it exists
+                if (meanOfMeansChart) {
+                    meanOfMeansChart.destroy();
+                }
+
+                // Count frequencies of sample means (rounded to 2 decimal places)
+                var frequencyMap = {};
+                for (var i = 0; i < sampleMeans.length; i++) {
+                    var mean = sampleMeans[i];
+                    if (frequencyMap[mean]) {
+                        frequencyMap[mean]++;
+                    } else {
+                        frequencyMap[mean] = 1;
+                    }
+                }
+
+                // Prepare data for chart
+                var meanValues = Object.keys(frequencyMap).map(parseFloat).sort(function(a, b) { return a - b; });
+                var frequencies = meanValues.map(function(mean) {
+                    return frequencyMap[mean];
+                });
+
+                var meanOfMeansCtx = document.getElementById('meanOfMeansChart').getContext('2d');
+
+                meanOfMeansChart = new Chart(meanOfMeansCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: meanValues.map(function(mean) { return mean.toFixed(2); }),
+                        datasets: [{
+                            label: 'Frequency',
+                            data: frequencies,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: { display: true, text: 'Sample Means' }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Frequency' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            function updateTheoreticalDistributionChart() {
+                // Destroy previous chart if it exists
+                if (theoreticalDistributionChart) {
+                    theoreticalDistributionChart.destroy();
+                }
+
+                // Theoretical counts based on probabilities
+                var theoreticalCounts = probs.map(function(p) { return p * sampleSizeInput.value; });
+
+                var theoreticalCtx = document.getElementById('theoreticalDistributionChart').getContext('2d');
+
+                theoreticalDistributionChart = new Chart(theoreticalCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Theoretical Counts',
+                            data: theoreticalCounts,
+                            backgroundColor: '#095f7a',
+                            borderColor: '#074a5e',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Frequency' }
+                            },
+                            x: {
+                                title: { display: true, text: 'Values' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            function updateEmpiricalDistributions() {
+                var empiricalGrid = document.getElementById('empiricalDistributionsGrid');
+                empiricalGrid.innerHTML = ''; // Clear previous charts
+                empiricalDistributionCharts = []; // Reset charts array
+
+                // Limit the number of charts to display for performance reasons
+                var chartsToDisplay = sampleCounts.length;
+
+                for (var i = 0; i < chartsToDisplay; i++) {
+                    var counts = sampleCounts[i];
+
+                    // Create a canvas element for each chart
+                    var chartContainer = document.createElement('div');
+                    chartContainer.classList.add('empirical-distribution-chart');
+
+                    var canvas = document.createElement('canvas');
+                    canvas.id = 'empiricalChart' + i;
+                    chartContainer.appendChild(canvas);
+                    empiricalGrid.appendChild(chartContainer);
+
+                    var ctx = canvas.getContext('2d');
+
+                    var chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Sample ' + (i + 1),
+                                data: counts,
+                                backgroundColor: 'rgba(255, 182, 193, 0.6)', // Pastel Pink
+                                borderColor: 'rgba(255, 182, 193, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Frequency' }
+                                },
+                                x: {
+                                    title: { display: true, text: 'Values' }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false }
+                            }
+                        }
+                    });
+
+                    empiricalDistributionCharts.push(chart);
+                }
+            }
+
+            function showResults() {
+                // Remove the 'hidden' class from the sections to make them visible
+                document.getElementById('theoreticalStatsDisplay').classList.remove('hidden');
+                document.getElementById('statsDisplay').classList.remove('hidden');
+                document.getElementById('meanOfMeansSection').classList.remove('hidden');
+                document.getElementById('theoreticalDistributionSection').classList.remove('hidden');
+                document.getElementById('empiricalDistributionsSection').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
