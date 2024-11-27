@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shannon Entropy and Primitive Roots in Cryptography</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 19px;
+            line-height: 28px;
+            color: #1c1c1c;
+            background-color: #ffffff;
+        }
+        h1 {
+            font-size: 36px;
+            color: #095f7a;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 28px;
+            color: #095f7a;
+            font-weight: bold;
+            margin-top: 40px;
+            text-align: left;
+        }
+        p {
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        ul {
+            text-align: left;
+            margin-left: 40px;
+        }
+        strong {
+            font-weight: bold;
+        }
+        .container {
+            margin: 0 auto;
+            max-width: 1200px;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            font-size: 16px;
+            padding: 10px;
+            box-sizing: border-box;
+            resize: none;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        label {
+            font-size: 18px;
+        }
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            background-color: #095f7a;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            margin-top: 0;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #064a5c;
+        }
+        .textareas-container, .decrypt-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            text-align: center;
+        }
+        .column {
+            flex: 1;
+            padding: 10px;
+            box-sizing: border-box;
+            min-width: 300px;
+        }
+        .column.center {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .slider-container label {
+            margin-right: 10px;
+            flex: 0 0 auto;
+        }
+        .slider-container input[type="range"] {
+            flex: 1 1 auto;
+            margin-right: 10px;
+        }
+        .slider-container button {
+            flex: 0 0 auto;
+        }
+        .histogram-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+        .histogram {
+            flex: 1;
+            min-width: 300px;
+            margin: 10px;
+            text-align: center;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+        .estimated-shift {
+            margin-top: 40px;
+            text-align: center;
+        }
+        .estimated-shift p {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+        .decryption-result {
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .emoji {
+            font-size: 30px;
+        }
+        /* Additional style for the note */
+        .note {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+    </style>
+
+    <!-- Include MathJax for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Updated Title -->
+        <h1>Shannon Entropy and Primitive Roots in Cryptography</h1>
+        <br>
+        <!-- Extended Theoretical Section -->
+        <h2>Shannon Entropy and Diversity Measures</h2>
+        <p>
+            Shannon Entropy is a fundamental concept in information theory, introduced by Claude Shannon in 1948. It quantifies the amount of uncertainty or unpredictability in a random variable or probability distribution. For a discrete random variable \( X \) with possible values \( x_1, x_2, \dots, x_n \) and probability mass function \( P(X) \), the Shannon Entropy \( H(X) \) is defined as:
+        </p>
+        <p style="text-align:center;">
+            \[
+            H(X) = -\sum_{i=1}^{n} P(x_i) \log_2 P(x_i)
+            \]
+        </p>
+        <p>
+            Entropy measures the expected amount of information produced by a stochastic source of data. A higher entropy indicates more unpredictability, which is desirable in cryptographic systems to ensure security. In cryptography, entropy is crucial for key generation and random number generation, as it ensures that cryptographic keys and other secrets are not easily guessable.
+        </p>
+        <p>
+            Another diversity measure related to entropy is the Rényi Entropy, which generalizes Shannon Entropy by introducing a parameter \( \alpha \) that adjusts the weight of probabilities in the calculation:
+        </p>
+        <p style="text-align:center;">
+            \[
+            H_{\alpha}(X) = \frac{1}{1 - \alpha} \log_2 \left( \sum_{i=1}^{n} P(x_i)^{\alpha} \right)
+            \]
+        </p>
+        <p>
+            This allows for different perspectives on diversity and uncertainty within a probability distribution. Additionally, the Gini-Simpson Index, commonly used in ecology to measure biodiversity, is another related measure:
+        </p>
+        <p style="text-align:center;">
+            \[
+            D = 1 - \sum_{i=1}^{n} P(x_i)^2
+            \]
+        </p>
+        <p>
+            While primarily used outside of cryptography, these measures help in understanding the distribution and concentration of probabilities, which can be applied to analyze the strength and unpredictability of cryptographic systems.
+        </p>
+
+        <h2>Primitive Roots</h2>
+        <p>
+            In modular arithmetic, a <strong>primitive root</strong> modulo a prime number \( p \) is an integer \( g \) such that every integer \( a \) co-prime to \( p \) is congruent to a power of \( g \) modulo \( p \). Formally, \( g \) is a primitive root modulo \( p \) if for every integer \( a \) co-prime to \( p \), there exists an integer \( k \) such that:
+        </p>
+        <p style="text-align:center;">
+            \[
+            g^k \equiv a \mod p
+            \]
+        </p>
+        <p>
+            This means that \( g \) generates the multiplicative group of integers modulo \( p \). The concept of primitive roots is fundamental in number theory and plays a vital role in cryptography, especially in algorithms that rely on the difficulty of the discrete logarithm problem.
+        </p>
+        <p>
+            For example, in the Diffie-Hellman key exchange protocol, primitive roots are used to securely generate shared secrets over an insecure channel. The security of this protocol relies on the fact that, while it is easy to compute \( g^k \mod p \), it is hard to reverse the process and find \( k \) given \( g \), \( p \), and \( g^k \mod p \).
+        </p>
+        <p>
+            Understanding primitive roots helps in designing cryptographic systems that are robust against attacks. Since not all integers modulo \( p \) are primitive roots, finding suitable primitive roots is an important step in setting up these cryptographic protocols.
+        </p>
+        <br>
+        <!-- Existing content starts here -->
+        <h1>Caesar Cipher Frequency Analysis</h1>
+        <p>
+            This program encrypts a given text using the Caesar cipher with a random shift. It then compares the letter frequencies of the encrypted text with those of the English language to estimate the shift used. The assumption is that the most frequent letter in the encrypted text corresponds to the most frequent letter in English.
+        </p>
+
+        <!-- Added note about text length -->
+        <p class="note">For better accuracy, it's recommended to use texts longer than 100 characters.</p>
+
+        <!-- Top section -->
+        <div class="textareas-container">
+            <div class="column left">
+                <div class="slider-container">
+                    <label for="wordCount">Words: <span id="wordCountValue">50</span></label>
+                    <input type="range" id="wordCount" min="10" max="500" value="50" oninput="updateWordCountValue(this.value)">
+                    <button onclick="generateRandomText()">Generate</button>
+                </div>
+                <textarea id="inputText" placeholder="Paste the text or generate it..."></textarea>
+            </div>
+            <div class="column center">
+                <button onclick="encryptText()">Encrypt Text &rarr;</button>
+            </div>
+            <div class="column right">
+                <textarea id="encryptedText" placeholder="Encrypted text will appear here..." readonly></textarea>
+            </div>
+        </div>
+
+        <!-- Histograms -->
+        <div class="histogram-container">
+            <div class="histogram">
+                <h2>Standard English Letter Frequencies</h2>
+                <canvas id="englishHistogram"></canvas>
+            </div>
+            <div class="histogram">
+                <h2>Encrypted Text Letter Frequencies</h2>
+                <canvas id="encryptedHistogram"></canvas>
+            </div>
+        </div>
+
+        <!-- Bottom section -->
+        <div class="estimated-shift">
+            <p>The most frequent letter in the encrypted text is '<span id="mostFrequentEncrypted"></span>', while the most frequent letter in English is '<span id="mostFrequentEnglish">E</span>'.</p>
+            <p>So we can estimate that a shift of '<span id="estimatedShift"></span>' characters was applied.</p>
+        </div>
+
+        <div class="decrypt-container">
+            <div class="column left">
+                <textarea id="encryptedTextCopy" placeholder="Encrypted text will appear here..." readonly></textarea>
+            </div>
+            <div class="column center">
+                <button onclick="decryptText()">Decrypt Text &rarr;</button>
+            </div>
+            <div class="column right">
+                <div id="decryptionResult" class="decryption-result"></div>
+                <textarea id="decryptedText" placeholder="Decrypted text will appear here..." readonly></textarea>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Include existing scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function updateWordCountValue(value) {
+            document.getElementById('wordCountValue').innerText = value;
+        }
+        
+        var commonWords = [
+            "the", "be", "to", "of", "and", "a", "in", "that", "have", "I",
+            "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
+            "this", "but", "his", "by", "from", "they", "we", "say", "her", "she",
+            "or", "an", "will", "my", "one", "all", "would", "there", "their",
+            "what", "so", "up", "out", "if", "about", "who", "get", "which", "go",
+            "me", "when", "make", "can", "like", "time", "no", "just", "him", "know",
+            "take", "people", "into", "year", "your", "good", "some", "could", "them", "see",
+            "other", "than", "then", "now", "look", "only", "come", "its", "over", "think",
+            "also", "back", "after", "use", "two", "how", "our", "work", "first", "well",
+            "way", "even", "new", "want", "because", "any", "these", "give", "day", "most",
+            "us"
+        ];
+        
+        function generateRandomText() {
+            var wordCount = document.getElementById('wordCount').value;
+            var randomText = "";
+            for (var i = 0; i < wordCount; i++) {
+                var randomIndex = Math.floor(Math.random() * commonWords.length);
+                randomText += commonWords[randomIndex] + " ";
+            }
+            document.getElementById('inputText').value = randomText.trim();
+        }
+
+        var shiftValue = 0;
+
+        function encryptText() {
+            var text = document.getElementById('inputText').value;
+            if (text.trim() === "") {
+                alert("Please enter or generate text to encrypt.");
+                return;
+            }
+            shiftValue = Math.floor(Math.random() * 25) + 1;
+            var encrypted = caesarCipher(text, shiftValue);
+            document.getElementById('encryptedText').value = encrypted;
+            document.getElementById('encryptedTextCopy').value = encrypted;
+            drawEnglishHistogram();
+            drawEncryptedHistogram(encrypted);
+            estimateShift(encrypted);
+            document.getElementById('decryptionResult').innerText = ""; // Clear previous result
+            document.getElementById('decryptedText').value = ""; // Clear previous decrypted text
+        }
+
+        function caesarCipher(str, shift) {
+            return str.replace(/[a-z]/gi, function(char) {
+                var code = char.charCodeAt(0);
+                var lower = (code >= 97);
+                var base = lower ? 97 : 65;
+                return String.fromCharCode(((code - base + shift) % 26) + base);
+            });
+        }
+
+        var englishFrequencies = {
+            'A': 8.12, 'B': 1.49, 'C': 2.71, 'D': 4.32, 'E': 12.02,
+            'F': 2.30, 'G': 2.03, 'H': 5.92, 'I': 7.31, 'J': 0.10,
+            'K': 0.69, 'L': 3.98, 'M': 2.61, 'N': 6.95, 'O': 7.68,
+            'P': 1.82, 'Q': 0.11, 'R': 6.02, 'S': 6.28, 'T': 9.10,
+            'U': 2.88, 'V': 1.11, 'W': 2.09, 'X': 0.17, 'Y': 2.11,
+            'Z': 0.07
+        };
+
+        var englishChart, encryptedChart;
+
+        function drawEnglishHistogram() {
+            var ctx = document.getElementById('englishHistogram').getContext('2d');
+            var labels = Object.keys(englishFrequencies);
+            var data = Object.values(englishFrequencies);
+
+            if (englishChart) englishChart.destroy();
+
+            englishChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Frequency (%)',
+                        data: data,
+                        backgroundColor: '#095f7a'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function drawEncryptedHistogram(encryptedText) {
+            var ctx = document.getElementById('encryptedHistogram').getContext('2d');
+            var frequencies = getLetterFrequencies(encryptedText);
+
+            var labels = Object.keys(frequencies);
+            var data = Object.values(frequencies);
+
+            if (encryptedChart) encryptedChart.destroy();
+
+            encryptedChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Frequency (%)',
+                        data: data,
+                        backgroundColor: '#095f7a'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function getLetterFrequencies(text) {
+            var frequencies = {};
+            var totalLetters = 0;
+            text = text.toUpperCase();
+            for (var i = 0; i < text.length; i++) {
+                var char = text[i];
+                if (char >= 'A' && char <= 'Z') {
+                    frequencies[char] = (frequencies[char] || 0) + 1;
+                    totalLetters++;
+                }
+            }
+            for (var letter in frequencies) {
+                frequencies[letter] = (frequencies[letter] / totalLetters * 100).toFixed(2);
+            }
+            for (var i = 65; i <= 90; i++) {
+                var letter = String.fromCharCode(i);
+                if (!frequencies[letter]) {
+                    frequencies[letter] = 0;
+                }
+            }
+            var sortedFrequencies = {};
+            Object.keys(frequencies).sort().forEach(function(key) {
+                sortedFrequencies[key] = frequencies[key];
+            });
+            return sortedFrequencies;
+        }
+
+        function estimateShift(encryptedText) {
+            var frequencies = getLetterFrequencies(encryptedText);
+            var maxFreq = 0;
+            var mostFrequentLetter = '';
+            for (var letter in frequencies) {
+                if (parseFloat(frequencies[letter]) > maxFreq) {
+                    maxFreq = parseFloat(frequencies[letter]);
+                    mostFrequentLetter = letter;
+                }
+            }
+            document.getElementById('mostFrequentEncrypted').innerText = mostFrequentLetter;
+
+            var estimatedShift = (mostFrequentLetter.charCodeAt(0) - 'E'.charCodeAt(0) + 26) % 26;
+            document.getElementById('estimatedShift').innerText = estimatedShift;
+        }
+
+        function decryptText() {
+            var encryptedText = document.getElementById('encryptedTextCopy').value;
+            var estimatedShift = parseInt(document.getElementById('estimatedShift').innerText);
+            var decrypted = caesarCipher(encryptedText, 26 - estimatedShift);
+            document.getElementById('decryptedText').value = decrypted;
+
+            var originalText = document.getElementById('inputText').value.trim().replace(/\s+/g, ' ').toUpperCase();
+            var decryptedText = decrypted.trim().replace(/\s+/g, ' ').toUpperCase();
+
+            if (originalText === decryptedText) {
+                document.getElementById('decryptionResult').innerHTML = 'The text was decrypted correctly! <span class="emoji">&#128512;</span>';
+            } else {
+                document.getElementById('decryptionResult').innerHTML = 'The text was not decrypted correctly. <span class="emoji">&#128577;</span>';
+            }
+        }
+    </script>
+</body>
+</html>
