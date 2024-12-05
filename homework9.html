@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sampling Variance Simulator</title>
+    <!-- Include Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include Montserrat font -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS for styling -->
+    <style>
+        /* Original styling */
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 19px;
+            line-height: 28px;
+            color: #1c1c1c;
+            background-color: #ffffff;
+        }
+        h1 {
+            font-size: 36px;
+            color: #095f7a;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 24px;
+            color: #095f7a;
+            font-weight: bold;
+            margin-top: 40px;
+            text-align: center;
+        }
+        p {
+            margin-bottom: 20px;
+        }
+        strong {
+            font-weight: bold;
+        }
+        .container {
+            text-align: center;
+            margin: 0 auto;
+            max-width: 1200px;
+        }
+        /* Alignment classes */
+        .left-align {
+            text-align: left;
+        }
+        .center-align {
+            text-align: center;
+        }
+        /* Specificity to override container alignment */
+        .container.left-align {
+            text-align: left;
+        }
+        .step-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #095f7a;
+        }
+        .form-control {
+            max-width: 80px;
+            margin: 0 auto;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-custom {
+            background-color: #095f7a;
+            color: white !important;
+            border: none;
+            transition: box-shadow 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: bold;
+            border-radius: 20px;
+            font-size: 18px;
+            padding: 12px 25px;
+            cursor: pointer;
+        }
+        .btn-custom:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: white !important;
+        }
+        /* Adjustments for inputs */
+        .inputs-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
+        }
+        .inputs-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            width: 100%;
+        }
+        .input-item {
+            flex: 0 0 auto;
+            margin: 10px;
+            text-align: center;
+        }
+        .inputs-container .form-control {
+            max-width: 80px;
+            width: 100%;
+        }
+        /* Probabilities styling */
+        .probabilities {
+            overflow-x: auto;
+            overflow-y: hidden;
+            margin: 0 auto;
+            max-width: 200px;
+            white-space: nowrap;
+        }
+        .probabilities .prob-inputs {
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .probabilities .form-group {
+            display: inline-block;
+            vertical-align: middle;
+            margin: 5px;
+        }
+        .probabilities label {
+            margin-right: 5px;
+        }
+        .probabilities input[type="number"] {
+            width: 60px;
+            display: inline-block;
+            text-align: center;
+        }
+        #invalidMessage {
+            color: red;
+            font-weight: bold;
+        }
+        /* Graphs container styling */
+        .graphs-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+        }
+        .graph-section {
+            width: 90%;
+            max-width: 900px;
+            margin-bottom: 50px;
+        }
+        .graph-section h3 {
+            font-size: 24px;
+            color: #095f7a;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .empirical-distributions-container {
+            max-height: 750px;
+            overflow-y: auto;
+            width: 100%;
+        }
+        .empirical-distributions-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+        }
+        .empirical-distribution-chart {
+            flex: 0 0 30%;
+            max-width: 30%;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+        @media (max-width: 1200px) {
+            .empirical-distribution-chart {
+                flex: 0 0 45%;
+                max-width: 45%;
+            }
+        }
+        @media (max-width: 768px) {
+            .empirical-distribution-chart {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+        }
+        .empirical-distribution-chart canvas {
+            width: 100% !important;
+            height: 300px !important;
+        }
+        .graph-section canvas {
+            width: 100% !important;
+            height: 400px !important;
+        }
+        /* Controls styling */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+        .controls label {
+            margin: 0 5px 0 0;
+        }
+        .controls input {
+            width: 100px;
+            margin-right: 10px;
+        }
+        .controls button {
+            margin-left: 10px;
+        }
+        /* Style for statistics display */
+        .stats-display {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+            color: #095f7a;
+        }
+        .stats-display span {
+            font-weight: bold;
+        }
+        /* Hidden class to hide elements */
+        .hidden {
+            display: none;
+        }
+        /* Additional message styling */
+        #additionalSamplesMessage {
+            text-align: center;
+            font-size: 16px;
+            color: #095f7a;
+            margin-top: 20px;
+        }
+    </style>
+    <!-- Include MathJax script for rendering LaTeX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body>
+    <br>
+    <!-- Theoretical Background Section with LaTeX -->
+    <div class="container mt-5 left-align">
+        <h2>Sampling statistics and their importance in Cybersecurity</h2>
+        <p>
+            In statistics, grasping the concepts of the <strong>sample mean</strong> (\(\bar{X}\)) and the <strong>sample variance</strong> (\(S^2\)) is essential, especially when we aim to make inferences about an unknown population. These sample statistics not only summarize the data we have but also help us estimate the broader population parameters, bridging the gap between descriptive and inferential statistics.
+        </p>
+        <p>
+            Descriptive statistics allow us to summarize and describe the features of a dataset, providing insights into the sample data itself. On the other hand, inferential statistics use this sample data to make generalizations or predictions about a larger population. The sample mean and variance play a crucial role in both areas, summarizing the sample while also serving as estimators for the population parameters.
+        </p>
+        <p>
+            The <strong>sample mean</strong> is calculated by taking the sum of all the observations and dividing by the number of observations:
+        </p>
+        \[
+        \bar{X} = \frac{1}{n} \sum_{i=1}^{n} X_i
+        \]
+        <p>
+            where \(X_i\) represents each observation in the sample, and \(n\) is the sample size. The sample mean serves as an unbiased estimator of the population mean \(\mu\), meaning that its expected value equals \(\mu\):
+        </p>
+        \[
+        E[\bar{X}] = \mu
+        \]
+        <p>
+            Furthermore, the variance of the sample mean decreases as the sample size increases, following the relation:
+        </p>
+        \[
+        \text{Var}(\bar{X}) = \frac{\sigma^2}{n}
+        \]
+        <p>
+            This indicates that larger samples provide more precise estimates of the population mean. As the sample size approaches infinity, the sample mean converges to the population mean, highlighting the principle of consistency:
+        </p>
+        \[
+        \lim_{n \to \infty} \bar{X} = \mu
+        \]
+        <p>
+            Similarly, the <strong>sample variance</strong> measures how much the observations in a sample differ from the sample mean. It's calculated using the formula:
+        </p>
+        \[
+        S^2 = \frac{1}{n - 1} \sum_{i=1}^{n} (X_i - \bar{X})^2
+        \]
+        <p>
+            Here, the denominator \(n - 1\) ensures that \(S^2\) is an unbiased estimator of the population variance \(\sigma^2\), so that:
+        </p>
+        \[
+        E[S^2] = \sigma^2
+        \]
+        <p>
+            Just like the sample mean, the sample variance becomes a more accurate estimator as the sample size increases, converging to the population variance:
+        </p>
+        \[
+        \lim_{n \to \infty} S^2 = \sigma^2
+        \]
+        <p>
+            The Law of Large Numbers (LLN) underpins these concepts by formalizing the idea that as the sample size grows, the sample mean becomes a better approximation of the population mean. According to the LLN, for any small positive number \(\epsilon\), the probability that the absolute difference between the sample mean and the population mean is greater than \(\epsilon\) approaches zero as \(n\) approaches infinity:
+        </p>
+        \[
+        \lim_{n \to \infty} P\left( |\bar{X} - \mu| \geq \epsilon \right) = 0
+        \]
+        <p>
+            In the context of cybersecurity, these statistical principles are invaluable. For instance, by collecting extensive samples of network traffic data, we can establish normal behavior patterns. The LLN assures us that our estimates of average network metrics become more accurate with more data, enabling us to detect anomalies that may indicate security threats.
+        </p>
+        <p>
+            Intrusion Detection Systems (IDS) rely heavily on statistical models to identify suspicious activities. By using sample statistics, IDS can estimate the likelihood of certain events and improve detection accuracy over time as they gather more data. Similarly, in risk assessment, analyzing sample data on past security incidents allows organizations to estimate the probability of future breaches and make informed decisions to mitigate risks.
+        </p>
+        <p>
+            Statistical inference also plays a critical role in cryptanalysis. By examining deviations in sample means and variances from expected values, we can detect non-random patterns that might indicate vulnerabilities in cryptographic algorithms. Moreover, sampling user activities, such as login times and access patterns, helps in creating typical behavior profiles. Significant deviations from these profiles can signal potential security threats, like compromised accounts or insider attacks.
+        </p>
+        <p>
+            Understanding and applying the concepts of sample mean, sample variance, and the Law of Large Numbers empower cybersecurity professionals to make data-driven decisions, enhance security measures, and respond effectively to emerging threats.
+        </p>
+    </div>
+    
+
+    <br>
+    <!-- Practical Exercise Section -->
+    <div class="container mt-5 center-align">
+        <h1>Sampling Variance Simulator</h1>
+        <!-- Instructions -->
+        <p>This simulator generates <strong>m</strong> samples of size <strong>n</strong> from a discrete univariate probability distribution with arbitrary probabilities. It computes the distribution of the sample variances and displays the theoretical and empirical distributions.</p>
+        <!-- Inputs Container -->
+        <div class="inputs-container mt-4">
+            <div class="inputs-row">
+                <!-- Number of Intervals -->
+                <div class="input-item text-center">
+                    <div class="step-label">Number of Intervals:</div>
+                    <input class="form-control d-inline-block" type="number" id="numIntervals" value="5" min="1">
+                </div>
+                <!-- Adjust Probabilities -->
+                <div class="input-item text-center">
+                    <div class="step-label">Adjust Probabilities:</div>
+                    <div class="probabilities mt-2">
+                        <!-- The probabilities form will be generated here -->
+                    </div>
+                </div>
+                <!-- Number of Samples (m) -->
+                <div class="input-item text-center">
+                    <div class="step-label">Number of Samples (m):</div>
+                    <input class="form-control d-inline-block" type="number" id="numSamplesInput" value="30" min="1">
+                </div>
+                <!-- Sample Size (n) -->
+                <div class="input-item text-center">
+                    <div class="step-label">Sample Size (n):</div>
+                    <input class="form-control d-inline-block" type="number" id="sampleSizeInput" value="50" min="2">
+                </div>
+                <!-- Start Simulation Button -->
+                <div class="input-item text-center">
+                    <button class="btn btn-custom" id="startSimulation">Start Simulation</button>
+                </div>
+            </div>
+            <!-- Invalid Message -->
+            <div id="invalidMessage" class="text-center mt-2"></div>
+        </div>
+        <!-- Graphs Container -->
+        <div class="graphs-container">
+            <!-- Theoretical Mean and Variance Display -->
+            <div class="stats-display hidden" id="theoreticalStatsDisplay">
+                <!-- Theoretical Mean and Variance will be displayed here -->
+            </div>
+            <!-- Mean and Variance Display -->
+            <div class="stats-display hidden" id="statsDisplay">
+                <!-- Mean of Sample Variances and Variance of Sample Variances will be displayed here -->
+            </div>
+            <!-- Distribution of Sample Variances Graph -->
+            <div class="graph-section hidden" id="varianceDistributionSection">
+                <h3>Distribution of Sample Variances</h3>
+                <canvas id="varianceDistributionChart"></canvas>
+            </div>
+            <!-- Theoretical Distribution Graph -->
+            <div class="graph-section hidden" id="theoreticalDistributionSection">
+                <h3>Theoretical Distribution</h3>
+                <canvas id="theoreticalDistributionChart"></canvas>
+            </div>
+            <!-- Empirical Distributions -->
+            <div class="graph-section hidden" id="empiricalDistributionsSection">
+                <h3>Empirical Distributions of Samples</h3>
+                <div class="empirical-distributions-container">
+                    <div class="empirical-distributions-grid" id="empiricalDistributionsGrid">
+                        <!-- Empirical distribution charts will be generated here -->
+                    </div>
+                    <!-- Additional samples message -->
+                    <div id="additionalSamplesMessage"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- JavaScript Code -->
+    <script>
+        window.onload = function() {
+            var varianceDistributionChart; // Chart for the sample variances
+            var theoreticalDistributionChart; // Chart for theoretical distribution
+            var empiricalDistributionCharts = []; // Charts for empirical distributions
+            var probs = [];
+            var labels = [];
+            var theoreticalMean = 0;
+            var theoreticalVariance = 0;
+            var theoreticalVarianceOfVariances = 0; // Theoretical variance of sample variances
+            var sampleVariances = []; // Array to store variances of each sample
+            var sampleCounts = []; // Array of counts for each sample
+            var numSamplesInput = document.getElementById('numSamplesInput'); // m
+            var sampleSizeInput = document.getElementById('sampleSizeInput'); // n
+            var numIntervalsInput = document.getElementById('numIntervals');
+            var inputs;
+            var maxVisibleProbs = 3;
+            var maxDistributionsDisplay = 10; // Maximum number of empirical distributions to display
+
+            // Event listener for number of intervals change
+            numIntervalsInput.oninput = function() {
+                generateProbabilities();
+            };
+
+            // Event listener for start simulation button
+            document.getElementById("startSimulation").onclick = function() {
+                if (!checkSum()) {
+                    alert('Please ensure the probabilities sum to 1.');
+                    return;
+                }
+                startSimulation();
+            };
+
+            // Initial calls
+            generateProbabilities();
+
+            function generateProbabilities(){
+                var numIntervals = parseInt(numIntervalsInput.value);
+                if (isNaN(numIntervals) || numIntervals <= 0) {
+                    alert('Please enter a valid number of intervals.');
+                    return;
+                }
+
+                var probabilitiesDiv = document.querySelector('.probabilities');
+                probabilitiesDiv.innerHTML = ''; // Clear previous content
+
+                // Generate random probabilities that sum exactly to 1
+                do {
+                    probs = [];
+                    var total = 0;
+                    for (var i = 0; i < numIntervals; i++) {
+                        var p = Math.random();
+                        probs.push(p);
+                        total += p;
+                    }
+                    // Normalize probabilities
+                    for (var i = 0; i < numIntervals; i++) {
+                        probs[i] = probs[i] / total;
+                        probs[i] = parseFloat(probs[i].toFixed(2)); // Limit to 2 decimal places
+                    }
+                    // Adjust the last probability to ensure the sum is exactly 1
+                    var sumProbs = probs.reduce(function(a, b) { return a + b; }, 0);
+                    var diff = 1 - sumProbs;
+                    probs[numIntervals - 1] += diff;
+                    probs[numIntervals - 1] = parseFloat(probs[numIntervals - 1].toFixed(2));
+
+                    // Adjust any rounding errors
+                    var finalSum = probs.reduce(function(a, b) { return a + b; }, 0);
+                    if (Math.abs(finalSum - 1) > 0.0001) {
+                        probs[numIntervals - 1] += 1 - finalSum;
+                        probs[numIntervals - 1] = parseFloat(probs[numIntervals - 1].toFixed(2));
+                    }
+                    // Ensure probabilities are valid and sum to 1
+                } while (!validateProbabilities(probs));
+
+                // Create inputs for probabilities
+                var probInputsDiv = document.createElement('div');
+                probInputsDiv.classList.add('prob-inputs');
+
+                for (var i = 0; i < numIntervals; i++) {
+                    var div = document.createElement('div');
+                    div.classList.add('form-group');
+                    var label = document.createElement('label');
+                    label.innerHTML = 'p' + (i+1) + ': ';
+                    var input = document.createElement('input');
+                    input.type = 'number';
+                    input.step = '0.01';
+                    input.value = probs[i].toFixed(2);
+                    input.min = '0';
+                    input.max = '1';
+                    input.classList.add('form-control');
+
+                    // Add event listener to check the sum when the value changes
+                    input.oninput = function() {
+                        // Ensure two decimal places
+                        if (this.value !== '') {
+                            this.value = parseFloat(this.value).toFixed(2);
+                        }
+                        checkSum();
+                    };
+
+                    div.appendChild(label);
+                    div.appendChild(input);
+                    probInputsDiv.appendChild(div);
+                }
+                probabilitiesDiv.appendChild(probInputsDiv);
+
+                inputs = probInputsDiv.querySelectorAll('input[type="number"]');
+
+                // Adjust the width of the probabilities container
+                probabilitiesDiv.style.maxWidth = '200px';
+
+                checkSum();
+            }
+
+            function validateProbabilities(probsArray) {
+                var total = probsArray.reduce(function(a, b) { return a + b; }, 0);
+                total = parseFloat(total.toFixed(2));
+                if (Math.abs(total - 1) > 0.0001) {
+                    return false;
+                }
+                for (var i = 0; i < probsArray.length; i++) {
+                    if (probsArray[i] < 0 || probsArray[i] > 1 || isNaN(probsArray[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function checkSum() {
+                var invalidMessage = document.getElementById('invalidMessage');
+                var total = 0;
+                var valid = true;
+                for (var i = 0; i < inputs.length; i++) {
+                    var val = parseFloat(inputs[i].value);
+                    if (isNaN(val) || val < 0 || val > 1) {
+                        valid = false;
+                        break;
+                    }
+                    total += val;
+                }
+                total = parseFloat(total.toFixed(2));
+                if (!valid || Math.abs(total - 1) > 0.01) {
+                    invalidMessage.innerHTML = 'Invalid values: probabilities must sum to 1.';
+                    return false;
+                } else {
+                    invalidMessage.innerHTML = '';
+                    return true;
+                }
+            }
+
+            function startSimulation() {
+                var m = parseInt(numSamplesInput.value); // Number of samples
+                var n = parseInt(sampleSizeInput.value); // Sample size
+                if (isNaN(m) || m <= 0 || isNaN(n) || n <= 1) {
+                    alert('Please enter valid numbers for the number of samples and sample size (n > 1).');
+                    return;
+                }
+
+                // Get probabilities
+                probs = [];
+                for (var i = 0; i < inputs.length; i++) {
+                    var val = parseFloat(inputs[i].value);
+                    probs.push(val);
+                }
+
+                // Prepare values (x_i)
+                var values = [];
+                for (var i = 0; i < probs.length; i++) {
+                    var x = i + 1; // Assuming x_i = i + 1
+                    values.push(x);
+                }
+
+                // Compute theoretical mean and variance
+                theoreticalMean = 0;
+                var expectedXSquare = 0;
+                for (var i = 0; i < probs.length; i++) {
+                    var x = values[i];
+                    theoreticalMean += x * probs[i];
+                    expectedXSquare += Math.pow(x, 2) * probs[i];
+                }
+                theoreticalVariance = expectedXSquare - Math.pow(theoreticalMean, 2);
+
+                // Compute the fourth central moment
+                var fourthCentralMoment = 0;
+                for (var i = 0; i < probs.length; i++) {
+                    var x = values[i];
+                    fourthCentralMoment += Math.pow(x - theoreticalMean, 4) * probs[i];
+                }
+
+                // Compute theoretical variance of sample variances
+                theoreticalVarianceOfVariances = (1 / n) * (fourthCentralMoment - ((n - 3) / (n - 1)) * Math.pow(theoreticalVariance, 2));
+
+                // Use actual values in labels
+                labels = values.map(function(x) { return x.toString(); });
+
+                // Clear previous sample variances and counts
+                sampleVariances = [];
+                sampleCounts = [];
+
+                // Prepare cumulative probabilities
+                var cumulativeProbs = [];
+                var cumulativeSum = 0;
+                for (var i = 0; i < probs.length; i++) {
+                    cumulativeSum += probs[i];
+                    cumulativeProbs.push(cumulativeSum);
+                }
+
+                // Generate m samples, each of size n
+                for (var i = 0; i < m; i++) {
+                    var mean = 0;
+                    var M2 = 0;
+                    var counts = new Array(probs.length).fill(0); // Counts for this sample
+                    for (var j = 0; j < n; j++) {
+                        // Generate one observation
+                        var rand = Math.random();
+                        for (var k = 0; k < cumulativeProbs.length; k++) {
+                            if (rand <= cumulativeProbs[k]) {
+                                var x = values[k];
+                                counts[k]++;
+                                break;
+                            }
+                        }
+                        // Update Welford's algorithm
+                        var delta = x - mean;
+                        mean = mean + delta / (j + 1);
+                        M2 = M2 + delta * (x - mean);
+                    }
+                    // Compute sample variance
+                    var variance = M2 / (n - 1); // Using the unbiased estimator
+
+                    sampleVariances.push(variance); // Keep full precision
+
+                    sampleCounts.push(counts);
+                }
+
+                // Compute mean and variance of sample variances
+                var meanOfVariances = sampleVariances.reduce(function(a, b) { return a + b; }, 0) / m;
+                var varianceOfVariances = sampleVariances.reduce(function(acc, val) {
+                    return acc + Math.pow(val - meanOfVariances, 2);
+                }, 0) / m;
+
+                // Display stats
+                displayTheoreticalStats(theoreticalMean, theoreticalVariance, theoreticalVarianceOfVariances);
+                displayStats(meanOfVariances, varianceOfVariances);
+
+                // Update charts
+                updateVarianceDistributionChart();
+                updateTheoreticalDistributionChart();
+                updateEmpiricalDistributions();
+
+                // Show the hidden sections
+                showResults();
+            }
+
+            function displayTheoreticalStats(theoreticalMean, theoreticalVariance, theoreticalVarianceOfVariances) {
+                var theoreticalStatsDisplay = document.getElementById('theoreticalStatsDisplay');
+                theoreticalStatsDisplay.innerHTML = `
+                    Theoretical Mean of Variances: <span>${theoreticalVariance.toFixed(3)}</span> &nbsp;&nbsp; | &nbsp;&nbsp;
+                    Theoretical Variance of Variances: <span>${theoreticalVarianceOfVariances.toFixed(3)}</span>
+                `;
+            }
+
+            function displayStats(meanOfVariances, varianceOfVariances) {
+                var statsDisplay = document.getElementById('statsDisplay');
+                statsDisplay.innerHTML = `
+                    Empirical Mean of Variances: <span>${meanOfVariances.toFixed(3)}</span> &nbsp;&nbsp; | &nbsp;&nbsp;
+                    Empirical Variance of Variances: <span>${varianceOfVariances.toFixed(3)}</span>
+                `;
+            }
+
+            function updateVarianceDistributionChart() {
+                // Destroy previous chart if it exists
+                if (varianceDistributionChart) {
+                    varianceDistributionChart.destroy();
+                }
+
+                // Truncate variances to two decimal places
+                var truncatedVariances = sampleVariances.map(function(variance) {
+                    return parseFloat(variance.toFixed(2));
+                });
+
+                // Count frequencies of truncated variances
+                var varianceCounts = {};
+                truncatedVariances.forEach(function(variance) {
+                    variance = variance.toFixed(2);
+                    if (varianceCounts[variance]) {
+                        varianceCounts[variance]++;
+                    } else {
+                        varianceCounts[variance] = 1;
+                    }
+                });
+
+                var binLabels = Object.keys(varianceCounts).sort(function(a, b) {
+                    return parseFloat(a) - parseFloat(b);
+                });
+                var frequencies = binLabels.map(function(bin) {
+                    return varianceCounts[bin];
+                });
+
+                var varianceCtx = document.getElementById('varianceDistributionChart').getContext('2d');
+
+                varianceDistributionChart = new Chart(varianceCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: binLabels,
+                        datasets: [{
+                            label: 'Frequency',
+                            data: frequencies,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: { display: true, text: 'Sample Variances' }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Frequency' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            function updateTheoreticalDistributionChart() {
+                // Destroy previous chart if it exists
+                if (theoreticalDistributionChart) {
+                    theoreticalDistributionChart.destroy();
+                }
+
+                // Theoretical probabilities
+                var theoreticalProbs = probs;
+
+                var theoreticalCtx = document.getElementById('theoreticalDistributionChart').getContext('2d');
+
+                theoreticalDistributionChart = new Chart(theoreticalCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels, // Use actual values in labels
+                        datasets: [{
+                            label: 'Theoretical Probabilities',
+                            data: theoreticalProbs,
+                            backgroundColor: '#095f7a',
+                            borderColor: '#074a5e',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Probability' }
+                            },
+                            x: {
+                                title: { display: true, text: 'Values' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            function updateEmpiricalDistributions() {
+                var empiricalGrid = document.getElementById('empiricalDistributionsGrid');
+                empiricalGrid.innerHTML = ''; // Clear previous charts
+                empiricalDistributionCharts = []; // Reset charts array
+
+                // Limit the number of charts to display
+                var chartsToDisplay = Math.min(sampleCounts.length, maxDistributionsDisplay);
+
+                for (var i = 0; i < chartsToDisplay; i++) {
+                    var counts = sampleCounts[i];
+
+                    // Create a canvas element for each chart
+                    var chartContainer = document.createElement('div');
+                    chartContainer.classList.add('empirical-distribution-chart');
+
+                    var canvas = document.createElement('canvas');
+                    canvas.id = 'empiricalChart' + i;
+                    chartContainer.appendChild(canvas);
+                    empiricalGrid.appendChild(chartContainer);
+
+                    var ctx = canvas.getContext('2d');
+
+                    var chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels, // Use actual values in labels
+                            datasets: [{
+                                label: 'Sample ' + (i + 1),
+                                data: counts,
+                                backgroundColor: 'rgba(255, 182, 193, 0.6)', // Pastel Pink
+                                borderColor: 'rgba(255, 182, 193, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Frequency' }
+                                },
+                                x: {
+                                    title: { display: true, text: 'Values' }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false }
+                            }
+                        }
+                    });
+
+                    empiricalDistributionCharts.push(chart);
+                }
+
+                // Display message if there are additional samples not shown
+                var additionalSamplesMessage = document.getElementById('additionalSamplesMessage');
+                if (sampleCounts.length > maxDistributionsDisplay) {
+                    var remainingSamples = sampleCounts.length - maxDistributionsDisplay;
+                    additionalSamplesMessage.innerHTML = `There are ${remainingSamples} additional samples not displayed to prevent slowing down the page.`;
+                } else {
+                    additionalSamplesMessage.innerHTML = '';
+                }
+            }
+
+            function showResults() {
+                // Remove the 'hidden' class from the sections to make them visible
+                document.getElementById('theoreticalStatsDisplay').classList.remove('hidden');
+                document.getElementById('statsDisplay').classList.remove('hidden');
+                document.getElementById('varianceDistributionSection').classList.remove('hidden');
+                document.getElementById('theoreticalDistributionSection').classList.remove('hidden');
+                document.getElementById('empiricalDistributionsSection').classList.remove('hidden');
+
+                // Hide the mean of means section (since we're focusing on variances)
+                var meanOfMeansSection = document.getElementById('meanOfMeansSection');
+                if (meanOfMeansSection) {
+                    meanOfMeansSection.classList.add('hidden');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
