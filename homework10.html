@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculation with Riemann or Lebesgue Integral</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Montserrat', sans-serif;
+        font-style: normal;
+        font-weight: 400;
+        font-size: 18px;
+        line-height: 26px;
+        color: #1c1c1c;
+        background-color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 1000px;
+        margin: auto;
+    }
+    h1, h2 {
+        font-size: 32px;
+        color: #095f7a;
+        font-weight: bold;
+        text-align: center;
+        margin: 20px 0;
+    }
+    h3 {
+        color: #095f7a;
+        font-weight: bold;
+    }
+    p {
+        text-align: justify;
+        margin-bottom: 15px;
+    }
+    .row {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+    .row:last-child {
+        flex: 1;
+        align-items: center;
+    }
+    .input-group {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-right: 20px;
+    }
+    label {
+        font-weight: bold;
+        margin-right: 5px;
+        color: #095f7a;
+    }
+    select, input {
+        font-size: 14px;
+        padding: 4px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        text-align: center;
+        width: 90px;
+    }
+    button {
+        background-color: #095f7a;
+        color: #fff;
+        border: none;
+        padding: 8px 15px;
+        cursor: pointer;
+        text-align: center;
+        border-radius: 15px;
+        font-size: 14px;
+        font-weight: bold;
+        margin-left: 20px;
+    }
+    button:hover {
+        background-color: #073d57;
+    }
+    .chart-section {
+        width: 65%;
+        padding: 10px;
+    }
+    .output-section {
+        width: 30%;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid #095f7a;
+        border-radius: 8px;
+        height: 180px;
+        box-sizing: border-box;
+    }
+    .output-section pre {
+        text-align: center;
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    canvas {
+        width: 100%;
+        height: auto;
+    }
+</style>
+</head>
+<body>
+<h1>Mean, variance and Lebesgue integration</h1>
+<div class="theory-section">
+    <h3>Sampling mean and variance</h3>
+    <p>The sampling mean is a representative measure of the center of a data set. It is defined as:</p>
+    <p>
+    \[
+    \bar{X} = \frac{1}{n} \sum_{i=1}^n X_i
+    \]
+    </p>
+    <p>where \( X_1, X_2, \ldots, X_n \) are independent and identically distributed (i.i.d.) random variables.</p>
+    <p>The sampling variance quantifies the spread of the data around the mean and is calculated as:</p>
+    <p>
+    \[
+    S^2 = \frac{1}{n-1} \sum_{i=1}^n (X_i - \bar{X})^2
+    \]
+    </p>
+    <p>The distribution of the sample mean tends to approach a normal distribution as the sample size increases, according to the Central Limit Theorem. Specifically, if the population mean is \( \mu \) and the population variance is \( \sigma^2 \), the sampling distribution of the mean has mean \( \mu \) and variance \( \frac{\sigma^2}{n} \).</p>
+    <p>The sampling variance \( S^2 \) is used to estimate the population variance \( \sigma^2 \), and its expected value is given by:</p>
+    <p>
+    \[
+    \mathbb{E}[S^2] = \sigma^2
+    \]
+    </p>
+    <h3>Lebesgue–Stieltjes integration and its applications</h3>
+    <p>The Lebesgue–Stieltjes integral generalizes the Riemann integral by allowing integration with respect to a distribution function \( G(x) \):</p>
+    <p>
+    \[
+    \int_a^b f(x) \, dG(x)
+    \]
+    </p>
+    <p>Here, \( G(x) \) is a monotonic function that may represent the cumulative distribution function (CDF) of a random variable. This integral is particularly useful in probability theory and measure theory.</p>
+    <p>In probability theory, the Lebesgue–Stieltjes integral provides a rigorous foundation for computing expectations of random variables:</p>
+    <p>
+    \[
+    \mathbb{E}[X] = \int_{-\infty}^\infty x \, dF(x)
+    \]
+    </p>
+    <p>where \( F(x) \) is the CDF of the random variable \( X \). The variance of \( X \) can similarly be expressed as:</p>
+    <p>
+    \[
+    \text{Var}(X) = \mathbb{E}[X^2] - (\mathbb{E}[X])^2
+    \]
+    </p>
+    <p>The advantage of the Lebesgue–Stieltjes integral lies in its ability to handle distributions that are not absolutely continuous. For example:</p>
+    <ul>
+        <li>If \( F(x) \) is the CDF of a discrete random variable, the integral reduces to a summation:
+        \[
+        \mathbb{E}[X] = \sum_{i} x_i P(X = x_i)
+        \]</li>
+        <li>If \( F(x) \) is absolutely continuous, \( dF(x) = f(x) dx \), where \( f(x) \) is the probability density function (PDF), and the integral becomes:
+        \[
+        \mathbb{E}[X] = \int_{-\infty}^\infty x f(x) \, dx
+        \]</li>
+    </ul>
+    <h3>Measure Theory Connections</h3>
+    <p>Lebesgue–Stieltjes integration is foundational in measure theory. Measure theory extends the concept of integration to more abstract spaces, allowing:</p>
+    <ul>
+        <li>Integration over sets that are not necessarily intervals.</li>
+        <li>Handling functions and spaces with complex topological structures.</li>
+    </ul>
+    <p>The key idea is to define a measure \( \mu \) that assigns "weights" to subsets of a given space. The integral of a function \( f \) with respect to \( \mu \) is written as:</p>
+    <p>
+    \[
+    \int f \, d\mu
+    \]
+    </p>
+    <p>In probability, the measure \( \mu \) is often the probability measure \( P \), satisfying \( \mu(\Omega) = P(\Omega) = 1 \), where \( \Omega \) is the sample space.</p>
+</div>
+<br>
+<h2>Computation of Riemann and Lebesgue Integrals</h2>
+<br>
+<div class="row">
+    <div class="input-group">
+        <label for="distribution">Function \( f(x) \):</label>
+        <select id="distribution">
+            <option value="Math.exp(-x)">e⁻ˣ</option>
+            <option value="Math.exp(-x*x)">e⁻ˣ²</option>
+            <option value="Math.sin(x)">sin(x)</option>
+            <option value="x*x">x²</option>
+        </select>
+    </div>
+    
+    <div class="input-group">
+        <label for="range">Integration range:</label>
+        <input id="a" type="number" value="0" placeholder="a">
+        <input id="b" type="number" value="1" placeholder="b" style="margin-left: 10px;">
+    </div>
+    <div class="input-group">
+        <label for="intervals">Intervals:</label>
+        <input id="intervals" type="number" value="100" min="10">
+    </div>
+    <button onclick="computeIntegrals()">Compute</button>
+</div>
+<div class="row">
+    <div class="chart-and-results">
+        <div class="chart-section">
+            <canvas id="chartCanvas"></canvas>
+        </div>
+        <div class="output-section">
+            <h3>Results</h3>
+            <pre>
+Riemann Integral: <span id="riemannResult">0.000000</span>
+Lebesgue Integral: <span id="lebesgueResult">0.000000</span>
+Difference: <span id="difference">0.000000</span>
+Mean: <span id="meanResult">0.000000</span>
+Variance: <span id="varianceResult">0.000000</span>
+            </pre>
+        </div>
+    </div>
+</div>
+<style>
+    .row {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .input-group {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-right: 20px;
+    }
+    label {
+        font-weight: bold;
+        margin-right: 5px;
+        color: #095f7a;
+    }
+    select, input {
+        font-size: 14px;
+        padding: 4px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        text-align: center;
+        width: 90px;
+    }
+    button {
+        background-color: #095f7a;
+        color: #fff;
+        border: none;
+        padding: 8px 15px;
+        cursor: pointer;
+        text-align: center;
+        border-radius: 15px;
+        font-size: 14px;
+        font-weight: bold;
+        margin-left: 20px;
+    }
+    button:hover {
+        background-color: #073d57;
+    }
+    .chart-and-results {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 20px;
+    }
+    .chart-section {
+        flex: 2;
+        padding: 10px;
+    }
+    .output-section {
+        flex: 1;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid #095f7a;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+    .output-section h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        color: #095f7a;
+    }
+    .output-section pre {
+        text-align: center;
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    canvas {
+        width: 100%;
+        height: auto;
+    }
+</style>
+
+<script>
+let chartInstance;
+
+function renderEmptyChart() {
+  const ctx = document.getElementById('chartCanvas').getContext('2d');
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Array.from({ length: 100 }, (_, i) => (i / 100).toFixed(2)),
+      datasets: [
+        {
+          label: 'f(x)',
+          data: Array(100).fill(0),
+          borderColor: 'blue',
+          borderWidth: 2,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true } },
+      scales: {
+        x: { title: { display: true, text: 'x' } },
+        y: { title: { display: true, text: 'f(x)' } },
+      },
+    },
+  });
+}
+
+function computeIntegrals() {
+  const f = new Function('x', 'return ' + document.getElementById('distribution').value);
+  const a = parseFloat(document.getElementById('a').value);
+  const b = parseFloat(document.getElementById('b').value);
+  const n = parseInt(document.getElementById('intervals').value);
+
+  const dx = (b - a) / n;
+  let riemannSum = 0;
+  let lebesgueSum = 0;
+  let mean = 0;
+  let meanSquare = 0;
+
+  const values = [];
+  for (let i = 0; i < n; i++) {
+    const x = a + i * dx;
+    const fx = f(x);
+    values.push({ x, fx });
+
+    riemannSum += fx * dx;
+    mean += x * fx;
+    meanSquare += x * x * fx;
+  }
+
+  mean /= riemannSum;
+  meanSquare /= riemannSum;
+  const variance = meanSquare - mean * mean;
+
+  values.sort((a, b) => a.fx - b.fx);
+  for (let i = 1; i < values.length; i++) {
+    const dfx = values[i].fx - values[i - 1].fx;
+    lebesgueSum += values[i - 1].fx * dfx;
+  }
+
+  document.getElementById('riemannResult').textContent = riemannSum.toFixed(6);
+  document.getElementById('lebesgueResult').textContent = lebesgueSum.toFixed(6);
+  document.getElementById('difference').textContent = Math.abs(riemannSum - lebesgueSum).toFixed(6);
+  document.getElementById('meanResult').textContent = mean.toFixed(6);
+  document.getElementById('varianceResult').textContent = variance.toFixed(6);
+
+  renderChart(values.map(v => v.x), values.map(v => v.fx));
+  MathJax.typeset();
+}
+
+function renderChart(xValues, yValues) {
+  const ctx = document.getElementById('chartCanvas').getContext('2d');
+
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: xValues.map(x => x.toFixed(2)),
+      datasets: [
+        {
+          label: 'f(x)',
+          data: yValues,
+          borderColor: 'blue',
+          borderWidth: 2,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true } },
+      scales: {
+        x: { title: { display: true, text: 'x' } },
+        y: { title: { display: true, text: 'f(x)' } },
+      },
+    },
+  });
+}
+
+document.addEventListener('DOMContentLoaded', renderEmptyChart);
+</script>
+</body>
+</html>
