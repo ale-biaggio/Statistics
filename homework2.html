@@ -3,26 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>Homework 2</title>
+
+    <!-- Mantengo Bootstrap per lo stile coerente di input e pulsanti -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
+        /* Reset margini e padding di base */
         html, body {
             margin: 0;
             padding: 0;
         }
+
+        /* Contenitore principale centrato */
         .container {
-            text-align: center;
-            margin: 0 auto;
             max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
         }
+
+        /* Canvas per le traiettorie e gli istogrammi */
         #graphCanvas {
             width: 100%;
             height: 400px;
-            margin: 0 auto;
             display: block;
+            margin: 0 auto;
             border: 2px solid #dee2e6;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
+        /* Sezione per label, input e pulsante */
         .controls {
             display: flex;
             justify-content: center;
@@ -33,7 +43,7 @@
             padding: 10px;
         }
         .controls label {
-            margin: 0 5px 0 0;
+            margin-right: 5px;
         }
         .controls input {
             width: 80px;
@@ -42,6 +52,8 @@
         .controls button {
             margin-left: 10px;
         }
+
+        /* Quando lo schermo è stretto, i controlli vanno a capo */
         @media (max-width: 1000px) {
             .controls {
                 flex-wrap: wrap;
@@ -52,270 +64,358 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
+
+        <!-- Sezione di input parametri e pulsante di avvio -->
         <div class="controls">
             <label for="numSimulations">Number of hackers:</label>
             <input class="form-control" type="number" id="numSimulations" value="100">
+
             <label for="numSteps">Number of servers:</label>
             <input class="form-control" type="number" id="numSteps" value="100">
+
             <label for="probability">Probability of penetration:</label>
             <input class="form-control" type="number" id="probability" step="0.01" value="0.5">
+
             <label for="intermediateStep">Relative frequency (k):</label>
             <input class="form-control" type="number" id="intermediateStep" value="50">
-            <button type="button" class="btn btn-primary" onclick="runSimulation()">Run Simulation</button>
+
+            <button type="button" class="btn btn-primary" onclick="runSimulation()">
+                Run Simulation
+            </button>
         </div>
+
+        <!-- Canvas dove disegno grafici e istogrammi -->
         <canvas id="graphCanvas"></canvas>
     </div>
+
     <script>
-        function runSimulation() {
-            // Input values
-            var n = parseInt(document.getElementById('numSimulations').value);
-            var m = parseInt(document.getElementById('numSteps').value);
-            var p = parseFloat(document.getElementById('probability').value);
-            var k = parseInt(document.getElementById('intermediateStep').value);
+    /*
+     * Funzione principale che:
+     * 1) Legge i parametri dai campi input
+     * 2) Crea le traiettorie (simulazioni)
+     * 3) Calcola media e varianza (finale e al passo k)
+     * 4) Disegna tutto sul canvas
+     */
+    function runSimulation() {
+        // 1) Leggo i parametri scelti dall’utente
+        var n = parseInt(document.getElementById('numSimulations').value);
+        var m = parseInt(document.getElementById('numSteps').value);
+        var p = parseFloat(document.getElementById('probability').value);
+        var k = parseInt(document.getElementById('intermediateStep').value);
 
-            // Canvas for the main graph
-            var canvas = document.getElementById('graphCanvas');
-            var ctx = canvas.getContext('2d');
+        // 2) Recupero riferimento al canvas e al suo contesto 2D
+        var canvas = document.getElementById('graphCanvas');
+        var ctx = canvas.getContext('2d');
 
-            // Set canvas dimensions
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
+        // 3) Imposto la dimensione interna del canvas uguale a quella “visuale”
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
 
-            // Clear the canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 4) Pulisco eventuali disegni precedenti
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Margins
-            var marginLeft = 50;
-            var marginRight = 150; // Reserve space for final distribution histogram
-            var marginTop = 50;
-            var marginBottom = 50;
+        // 5) Definisco margini e dimensioni del plot
+        var marginLeft = 50;
+        var marginRight = 150;
+        var marginTop = 50;
+        var marginBottom = 50;
 
-            var plotWidth = canvas.width - marginLeft - marginRight;
-            var plotHeight = canvas.height - marginTop - marginBottom;
+        var plotWidth = canvas.width - marginLeft - marginRight;
+        var plotHeight = canvas.height - marginTop - marginBottom;
 
-            // X-axis step
-            var xStep = plotWidth / m;
+        // 6) Calcolo di quanto mi sposto orizzontalmente ad ogni step
+        var xStep = plotWidth / m;
 
-            // Generate colors for each trajectory
-            var colors = [];
-            for (var i = 0; i < n; i++) {
-                colors.push('hsl(' + (i * 360 / n) + ', 100%, 50%)');
-            }
+        // 7) Creo una serie di colori per le traiettorie
+        var colors = [];
+        var i;
+        for (i = 0; i < n; i++) {
+            var hueValue = (i * 360) / n;
+            var colorString = 'hsl(' + hueValue + ', 100%, 50%)';
+            colors.push(colorString);
+        }
 
-            // Arrays to store final values and values at intermediate step k
-            var finalValues = [];
-            var intermediateValues = [];
+        // 8) Array dove memorizzo i valori finali (X[m]) e quelli al passo k (X[k])
+        var finalValues = [];
+        var intermediateValues = [];
 
-            // Variables for mean and variance
-            var mean = 0;
-            var delta = 0;
-            var deviance = 0;
+        // 9) Variabili per media e varianza in modo incrementale
+        var mean = 0;
+        var deviance = 0;
+        var delta = 0;
 
-            // Simulate trajectories
-            var maxAbsValue = 0; // For scaling Y-axis
-            var minAbsValue = 0;
-            var trajectories = []; // Store all trajectories
+        // 10) Valori min e max raggiunti dalle traiettorie
+        var maxAbsValue = 0;
+        var minAbsValue = 0;
 
-            for (var sim = 0; sim < n; sim++) {
-                var X = [0]; // Initial value X0 = 0
-                for (var step = 1; step <= m; step++) {
-                    var jump = 0;
-                    // Success with probability p: go up by 1
-                    if (Math.random() < p) {
-                        jump = 1;
-                    } else {
-                        // Failure: go down by 1
-                        jump = -1;
-                    }
-                    // Step: X_{t+1} = X_t + jump
-                    var X_new = X[step - 1] + jump;
-                    X.push(X_new);
+        // 11) Array che conterrà tutte le traiettorie
+        var trajectories = [];
 
-                    // Keep track of maximum and minimum values for scaling
-                    if (X_new > maxAbsValue) {
-                        maxAbsValue = X_new;
-                    }
-                    if (X_new < minAbsValue) {
-                        minAbsValue = X_new;
-                    }
+        // 12) Genero n traiettorie
+        var sim;
+        for (sim = 0; sim < n; sim++) {
+            // Ogni traiettoria è un array X, con X[0] = 0
+            var X = [];
+            X[0] = 0;
+
+            // Faccio m passi
+            var step;
+            for (step = 1; step <= m; step++) {
+                // Estraggo un numero casuale
+                var rand = Math.random();
+                var jump;
+                if (rand < p) {
+                    jump = 1; 
+                } else {
+                    jump = -1;
                 }
-                trajectories.push(X);
 
-                // Collect final value
-                finalValues.push(X[m]);
+                var newValue = X[step - 1] + jump;
+                X[step] = newValue;
 
-                // Collect value at intermediate step k
-                intermediateValues.push(X[k]);
-
-                // Update mean and variance calculations
-                var level = X[m];
-                var count = sim + 1;
-                delta = level - mean;
-                mean += delta / count;
-                deviance += delta * (level - mean);
+                // Aggiorno max e min se serve
+                if (newValue > maxAbsValue) {
+                    maxAbsValue = newValue;
+                }
+                if (newValue < minAbsValue) {
+                    minAbsValue = newValue;
+                }
             }
 
-            // Variance
-            var variance = deviance / n;
+            // Aggiungo la traiettoria al mio array di traiettorie
+            trajectories.push(X);
 
-            // Calculate mean and variance for intermediateValues
-            var sum_k = 0;
-            for (var i = 0; i < intermediateValues.length; i++) {
-                sum_k += intermediateValues[i];
-            }
-            var mean_k = sum_k / intermediateValues.length;
+            // Prendo il valore finale e quello intermedio
+            var finalValue = X[m];
+            var intermediateValue = X[k];
 
-            var sumSquaredDiffs_k = 0;
-            for (var i = 0; i < intermediateValues.length; i++) {
-                var diff = intermediateValues[i] - mean_k;
-                sumSquaredDiffs_k += diff * diff;
-            }
-            var variance_k = sumSquaredDiffs_k / intermediateValues.length;
+            finalValues.push(finalValue);
+            intermediateValues.push(intermediateValue);
 
-            // Y-axis scaling
-            var yMax = Math.ceil(maxAbsValue) + 1;
-            var yMin = Math.floor(minAbsValue) - 1;
-            var yRange = yMax - yMin;
-            var yScale = plotHeight / yRange;
+            // Calcolo incrementale di mean e deviance
+            var countSoFar = sim + 1;
+            delta = finalValue - mean;
+            mean = mean + (delta / countSoFar);
+            deviance = deviance + (delta * (finalValue - mean));
+        }
 
-            // Center zero on the canvas
-            var yZero = marginTop + plotHeight - ((0 - yMin) * yScale);
+        // 13) Calcolo la varianza finale
+        var variance = deviance / n;
 
-            // Draw Y-axis at x = marginLeft
+        // 14) Calcolo mean e variance per i valori al passo k
+        var sum_k = 0;
+        var i_k;
+        for (i_k = 0; i_k < intermediateValues.length; i_k++) {
+            sum_k = sum_k + intermediateValues[i_k];
+        }
+        var mean_k = sum_k / intermediateValues.length;
+
+        var sumSquaredDiffs_k = 0;
+        var j_k;
+        for (j_k = 0; j_k < intermediateValues.length; j_k++) {
+            var diff_k = intermediateValues[j_k] - mean_k;
+            sumSquaredDiffs_k = sumSquaredDiffs_k + (diff_k * diff_k);
+        }
+        var variance_k = sumSquaredDiffs_k / intermediateValues.length;
+
+        // 15) Stabilisco i limiti dell’asse Y
+        var yMax = Math.ceil(maxAbsValue) + 1;
+        var yMin = Math.floor(minAbsValue) - 1;
+        var yRange = yMax - yMin;
+        var yScale = plotHeight / yRange;
+
+        // 16) Dov’è Y=0 in coordinate canvas?
+        var yZero = marginTop + plotHeight - ((0 - yMin) * yScale);
+
+        // 17) Disegno asse Y
+        ctx.beginPath();
+        ctx.moveTo(marginLeft, marginTop);
+        ctx.lineTo(marginLeft, marginTop + plotHeight);
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 18) Disegno asse X in corrispondenza di Y=0 (se è nel range)
+        ctx.beginPath();
+        ctx.moveTo(marginLeft, yZero);
+        ctx.lineTo(marginLeft + plotWidth, yZero);
+        ctx.stroke();
+
+        // 19) Tacche ed etichette sull’asse Y
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.font = '12px Arial';
+
+        // Ogni quanto metto una tacca
+        var yLabelStep = Math.ceil(yRange / 10);
+        var yValue;
+        for (yValue = yMin; yValue <= yMax; yValue = yValue + yLabelStep) {
+            var yPos = marginTop + plotHeight - ((yValue - yMin) * yScale);
+
             ctx.beginPath();
-            ctx.moveTo(marginLeft, marginTop);
-            ctx.lineTo(marginLeft, marginTop + plotHeight);
+            ctx.moveTo(marginLeft - 5, yPos);
+            ctx.lineTo(marginLeft, yPos);
+            ctx.stroke();
+
+            ctx.fillText(yValue, marginLeft - 10, yPos);
+        }
+
+        // 20) Disegno delle traiettorie (step function)
+        var simIndex;
+        for (simIndex = 0; simIndex < n; simIndex++) {
+            ctx.strokeStyle = colors[simIndex];
+            ctx.beginPath();
+
+            // Parto dalla coordinata X corrispondente a step 0
+            var xStart = marginLeft;
+            var yFirstValue = trajectories[simIndex][0];
+            var yFirstCoord = marginTop + plotHeight - ((yFirstValue - yMin) * yScale);
+
+            ctx.moveTo(xStart, yFirstCoord);
+
+            // Disegno i vari step
+            var stepIndex;
+            for (stepIndex = 1; stepIndex <= m; stepIndex++) {
+                var xCurrent = marginLeft + (stepIndex * xStep);
+                var currentValue = trajectories[simIndex][stepIndex];
+                var yCurrent = marginTop + plotHeight - ((currentValue - yMin) * yScale);
+
+                // Tratto orizzontale
+                ctx.lineTo(xCurrent, yFirstCoord);
+                // Tratto verticale
+                ctx.lineTo(xCurrent, yCurrent);
+
+                // Aggiorno xStart e yFirstCoord
+                xStart = xCurrent;
+                yFirstCoord = yCurrent;
+            }
+            ctx.stroke();
+        }
+
+        // 21) Disegno l’istogramma dei valori finali sulla destra
+        var xHistogramFinal = marginLeft + plotWidth + 10;
+        var histogramWidth = marginRight - 20;
+        drawHistogram(ctx, finalValues, xHistogramFinal, marginTop, histogramWidth, plotHeight, yScale, yMin, yMax);
+
+        // 22) Disegno l’istogramma dei valori al passo k
+        var xAtK = marginLeft + (k * xStep);
+        var histogramWidthAtK = 0.15 * plotWidth;
+        var offsetK = 5; // piccolo spostamento a destra
+        drawHistogramAtK(ctx, intermediateValues, xAtK + offsetK, marginTop, histogramWidthAtK, plotHeight, yScale, yMin, yMax);
+
+        // 23) Mostro il testo di media e varianza al passo k
+        ctx.fillStyle = 'black';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+
+        var textX_k = xAtK + (histogramWidthAtK / 2);
+        var textY_k = marginTop + plotHeight + 20;
+        ctx.fillText('Mean at k: ' + mean_k.toFixed(2), textX_k, textY_k);
+        ctx.fillText('Variance at k: ' + variance_k.toFixed(2), textX_k, textY_k + 15);
+
+        // 24) Mostro il testo di mean e varianza finali (dopo m step)
+        var textX_final = xHistogramFinal + (histogramWidth / 2);
+        var textY_final = marginTop + plotHeight + 20;
+        ctx.fillText('Mean: ' + mean.toFixed(2), textX_final, textY_final);
+        ctx.fillText('Variance: ' + variance.toFixed(2), textX_final, textY_final + 15);
+    }
+
+    /*
+     * Funzione per disegnare un istogramma orizzontale dei dati finali.
+     * Ogni “bin” (arrotondato) è una barra con larghezza proporzionale alla frequenza.
+     */
+    function drawHistogram(ctx, data, xStart, yStart, histogramWidth, plotHeight, yScale, yMin, yMax) {
+        // 1) Calcolo le frequenze in un oggetto
+        var frequencies = {};
+        var i;
+        for (i = 0; i < data.length; i++) {
+            var value = data[i];
+            var bin = Math.round(value);
+            if (frequencies[bin] === undefined) {
+                frequencies[bin] = 1;
+            } else {
+                frequencies[bin] = frequencies[bin] + 1;
+            }
+        }
+
+        // 2) Trovo la frequenza massima
+        var maxFrequency = 0;
+        var binValue;
+        for (binValue in frequencies) {
+            var freq = frequencies[binValue];
+            if (freq > maxFrequency) {
+                maxFrequency = freq;
+            }
+        }
+
+        // 3) Disegno una barra orizzontale per ciascun bin
+        for (binValue in frequencies) {
+            var freq2 = frequencies[binValue];
+
+            // Determino la coordinata Y corrispondente al bin
+            var yCenter = yStart + plotHeight - ((binValue - yMin) * yScale) - (yScale / 2);
+
+            // Altezza della barra
+            var barHeight = yScale - 2;
+
+            // Larghezza (orizzontale) proporzionale alla frequenza
+            var barLength = (freq2 / maxFrequency) * histogramWidth;
+
+            // Disegno la barra
+            ctx.fillStyle = 'skyblue';
+            ctx.fillRect(xStart, yCenter - (barHeight / 2), barLength, barHeight);
+
+            // Disegno il bordo
             ctx.strokeStyle = 'black';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            // Draw X-axis at y = yZero (where y = 0)
-            ctx.beginPath();
-            ctx.moveTo(marginLeft, yZero);
-            ctx.lineTo(marginLeft + plotWidth, yZero);
-            ctx.stroke();
-
-            // Draw Y-axis labels
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'middle';
-            ctx.font = '12px Arial';
-            var yLabelStep = Math.ceil(yRange / 10);
-            for (var yValue = yMin; yValue <= yMax; yValue += yLabelStep) {
-                var yPos = marginTop + plotHeight - ((yValue - yMin) * yScale);
-                ctx.beginPath();
-                ctx.moveTo(marginLeft - 5, yPos);
-                ctx.lineTo(marginLeft, yPos);
-                ctx.stroke();
-                ctx.fillText(yValue, marginLeft - 10, yPos);
-            }
-
-            // Draw trajectories as step functions
-            for (var sim = 0; sim < n; sim++) {
-                ctx.strokeStyle = colors[sim];
-                ctx.beginPath();
-                var xPrev = marginLeft;
-                var yPrev = marginTop + plotHeight - ((trajectories[sim][0] - yMin) * yScale);
-                ctx.moveTo(xPrev, yPrev);
-
-                for (var step = 1; step <= m; step++) {
-                    var xCurr = marginLeft + step * xStep;
-                    var yCurr = marginTop + plotHeight - ((trajectories[sim][step] - yMin) * yScale);
-
-                    // Draw horizontal line to next time step
-                    ctx.lineTo(xCurr, yPrev);
-
-                    // Draw vertical line to new y value
-                    ctx.lineTo(xCurr, yCurr);
-
-                    // Update previous positions
-                    xPrev = xCurr;
-                    yPrev = yCurr;
-                }
-                ctx.stroke();
-            }
-
-            // Draw final distribution histogram
-            var xStartFinalHistogram = marginLeft + plotWidth + 10;
-            var histogramWidth = marginRight - 20;
-            drawHistogram(ctx, finalValues, xStartFinalHistogram, marginTop, histogramWidth, plotHeight, yScale, yMin, yMax);
-
-            // Draw intermediate distribution histogram at step k
-            var xAtK = marginLeft + k * xStep;
-            var histogramWidthAtK = 0.15 * plotWidth;
-            drawHistogramAtK(ctx, intermediateValues, xAtK + 5, marginTop, histogramWidthAtK, plotHeight, yScale, yMin, yMax);
-
-            // Display mean and variance at step k
-            ctx.fillStyle = 'black';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'center';
-            var textX_k = xAtK + histogramWidthAtK / 2;
-            var textY_k = marginTop + plotHeight + 20;
-            ctx.fillText('Mean at k: ' + mean_k.toFixed(2), textX_k, textY_k);
-            ctx.fillText('Variance at k: ' + variance_k.toFixed(2), textX_k, textY_k + 15);
-
-            // Display mean and variance for final values under the final histogram
-            ctx.fillStyle = 'black';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'center';
-            var textX_final = xStartFinalHistogram + histogramWidth / 2;
-            var textY_final = marginTop + plotHeight + 20;
-            ctx.fillText('Mean: ' + mean.toFixed(2), textX_final, textY_final);
-            ctx.fillText('Variance: ' + variance.toFixed(2), textX_final, textY_final + 15);
+            ctx.strokeRect(xStart, yCenter - (barHeight / 2), barLength, barHeight);
         }
+    }
 
-        function drawHistogram(ctx, data, xStart, yStart, histogramWidth, plotHeight, yScale, yMin, yMax) {
-            // Calculate frequencies
-            var frequencies = {};
-            data.forEach(function(value) {
-                var bin = Math.round(value);
-                frequencies[bin] = (frequencies[bin] || 0) + 1;
-            });
-
-            // Find max frequency
-            var maxFrequency = Math.max(...Object.values(frequencies));
-
-            // Draw histogram
-            for (var bin in frequencies) {
-                var freq = frequencies[bin];
-                var y = yStart + plotHeight - ((bin - yMin) * yScale) - yScale / 2;
-                var barHeight = yScale - 2;
-                var barLength = (freq / maxFrequency) * histogramWidth;
-                var x = xStart;
-
-                ctx.fillStyle = 'skyblue';
-                ctx.fillRect(x, y - barHeight / 2, barLength, barHeight);
-                ctx.strokeStyle = 'black';
-                ctx.strokeRect(x, y - barHeight / 2, barLength, barHeight);
+    /*
+     * Funzione per disegnare l’istogramma dei valori al passo k,
+     * identico a quello finale ma colorato in verde chiaro.
+     */
+    function drawHistogramAtK(ctx, data, xStart, yStart, histogramWidth, plotHeight, yScale, yMin, yMax) {
+        // 1) Calcolo le frequenze
+        var frequencies = {};
+        var i;
+        for (i = 0; i < data.length; i++) {
+            var value = data[i];
+            var bin = Math.round(value);
+            if (frequencies[bin] === undefined) {
+                frequencies[bin] = 1;
+            } else {
+                frequencies[bin] = frequencies[bin] + 1;
             }
         }
 
-        function drawHistogramAtK(ctx, data, xStart, yStart, histogramWidth, plotHeight, yScale, yMin, yMax) {
-            // Calculate frequencies
-            var frequencies = {};
-            data.forEach(function(value) {
-                var bin = Math.round(value);
-                frequencies[bin] = (frequencies[bin] || 0) + 1;
-            });
-
-            // Find max frequency
-            var maxFrequency = Math.max(...Object.values(frequencies));
-
-            // Draw histogram
-            for (var bin in frequencies) {
-                var freq = frequencies[bin];
-                var y = yStart + plotHeight - ((bin - yMin) * yScale) - yScale / 2;
-                var barHeight = yScale - 2;
-                var barLength = (freq / maxFrequency) * histogramWidth;
-                var x = xStart;
-
-                ctx.fillStyle = 'lightgreen';
-                ctx.fillRect(x, y - barHeight / 2, barLength, barHeight);
-                ctx.strokeStyle = 'black';
-                ctx.strokeRect(x, y - barHeight / 2, barLength, barHeight);
+        // 2) Trovo la frequenza massima
+        var maxFrequency = 0;
+        var binKey;
+        for (binKey in frequencies) {
+            var freqCount = frequencies[binKey];
+            if (freqCount > maxFrequency) {
+                maxFrequency = freqCount;
             }
         }
+
+        // 3) Disegno la barra per ciascun bin
+        for (binKey in frequencies) {
+            var freqFinal = frequencies[binKey];
+            var yCenter2 = yStart + plotHeight - ((binKey - yMin) * yScale) - (yScale / 2);
+            var barHeight2 = yScale - 2;
+            var barLength2 = (freqFinal / maxFrequency) * histogramWidth;
+
+            ctx.fillStyle = 'lightgreen';
+            ctx.fillRect(xStart, yCenter2 - (barHeight2 / 2), barLength2, barHeight2);
+
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(xStart, yCenter2 - (barHeight2 / 2), barLength2, barHeight2);
+        }
+    }
     </script>
 </body>
 </html>

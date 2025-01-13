@@ -55,11 +55,12 @@
 <body>
     <div class="container">
         <div class="controls">
-            
             <label for="m">Number of hackers:</label>
             <input type="number" id="m" class="form-control" value="5">
+            
             <label for="n">Number of servers:</label>
             <input type="number" id="n" class="form-control" value="10">
+            
             <label for="p">Probability of penetration:</label>
             <input type="number" id="p" class="form-control" step="0.1" value="0.3">
             
@@ -70,87 +71,93 @@
     
     <script>
         function generateChart() {
-            // Calculate the average number of penetrations using the recursive formula
-            let mean = 0;
-            let count = 0;
+            // Calculate the average number of penetrations using a simple incremental mean
+            var mean = 0;
+            var count = 0;
+
             // Read input values from the form
-            const numServers = parseInt(document.getElementById('n').value);
-            const numHackers = parseInt(document.getElementById('m').value);
-            const penetrationProbability = parseFloat(document.getElementById('p').value);
-    
+            var numServers = parseInt(document.getElementById('n').value);
+            var numHackers = parseInt(document.getElementById('m').value);
+            var penetrationProbability = parseFloat(document.getElementById('p').value);
+
             // Get the canvas element and its context
-            const canvas = document.getElementById('penetrationChart');
-            const ctx = canvas.getContext('2d');
-    
+            var canvas = document.getElementById('penetrationChart');
+            var ctx = canvas.getContext('2d');
+
             // Set the canvas dimensions
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
-    
+
             // Clear the canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+
             // Fill the canvas with a white background
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
             // Margins for the chart
-            const leftMargin = 80;
-            const bottomMargin = 60;
-            const topMargin = 60; // Increased to make space for the text
-            const rightMargin = 80;
-    
+            var leftMargin = 80;
+            var bottomMargin = 60;
+            var topMargin = 60; // Increased to make space for the text
+            var rightMargin = 80;
+
             // Usable width and height of the canvas
-            const usableWidth = canvas.width - leftMargin - rightMargin;
-            const usableHeight = canvas.height - topMargin - bottomMargin;
-            const penetrationWidth = (2 / 3) * usableWidth;
-            const histogramWidth = usableWidth - penetrationWidth;
-    
+            var usableWidth = canvas.width - leftMargin - rightMargin;
+            var usableHeight = canvas.height - topMargin - bottomMargin;
+            var penetrationWidth = (2 / 3) * usableWidth;
+            var histogramWidth = usableWidth - penetrationWidth;
+
             // Simulate the attacks
-            const attacks = [];
-            for (let i = 0; i < numHackers; i++) {
-                const hackerAttempts = [];
-                for (let j = 0; j < numServers; j++) {
+            var attacks = [];
+            var i, j;
+            for (i = 0; i < numHackers; i++) {
+                var hackerAttempts = [];
+                for (j = 0; j < numServers; j++) {
                     if (Math.random() < penetrationProbability) {
                         hackerAttempts.push(1); // Successful penetration
                     } else {
                         hackerAttempts.push(0); // Failed penetration
                     }
                 }
-                attacks.push(hackerAttempts); // Add the results for each hacker
+                attacks.push(hackerAttempts);
             }
-    
+
             // Calculate the levels reached by each hacker for the histogram
-            const levelCounts = new Array(numServers + 1).fill(0); // Array to count the penetration levels reached
-            for (let i = 0; i < numHackers; i++) {
-                let level = 0;
-                for (let j = 0; j < numServers; j++) {
+            var levelCounts = [];
+            for (i = 0; i <= numServers; i++) {
+                levelCounts.push(0);
+            }
+
+            for (i = 0; i < numHackers; i++) {
+                var level = 0;
+                for (j = 0; j < numServers; j++) {
                     if (attacks[i][j] === 1) {
-                        level++; // Increment the level for each successful penetration
+                        level++;
                     }
                 }
                 levelCounts[level]++;
-                // Calculate the mean recursively
+                // Update mean incrementally
                 count++;
                 mean = mean + (level - mean) / count;
             }
-    
+
             // Draw the average penetrations text inside the canvas
             ctx.font = '16px Arial';
             ctx.fillStyle = 'black';
             ctx.textAlign = 'center';
-            ctx.fillText(`The average of penetrations is: ${mean.toFixed(2)}`, canvas.width / 2, 30);
-    
+            ctx.fillText("The average of penetrations is: " + mean.toFixed(2), canvas.width / 2, 30);
+
             // Draw the penetration chart
             drawChart(ctx, attacks, numServers, numHackers, leftMargin, bottomMargin, topMargin, penetrationWidth, usableHeight);
-    
+
             // Draw the histogram
             drawHistogram(ctx, levelCounts, numServers, leftMargin, bottomMargin, topMargin, penetrationWidth, histogramWidth, usableHeight);
         }
-    
+
         function drawChart(ctx, attacks, numServers, numHackers, leftMargin, bottomMargin, topMargin, penetrationWidth, usableHeight) {
-            const heightStep = usableHeight / (numServers + 1); // Height for each penetration level
-            const colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan', 'magenta', 'brown', 'pink', 'teal'];
-    
+            var heightStep = usableHeight / (numServers + 1);
+            var colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan', 'magenta', 'brown', 'pink', 'teal'];
+
             // Draw the chart axes
             ctx.beginPath();
             ctx.moveTo(leftMargin, ctx.canvas.height - bottomMargin); // X-axis
@@ -160,115 +167,132 @@
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 2;
             ctx.stroke();
-    
+
             // Add ticks on the x-axis (servers)
             ctx.font = '12px Arial';
             ctx.fillStyle = 'black';
-            const xTickInterval = Math.ceil(numServers / 20); // Show a maximum of 20 ticks on the x-axis
-            for (let j = 0; j <= numServers; j++) {
-                const x = leftMargin + (j * (penetrationWidth / numServers));
+            var xTickInterval = Math.ceil(numServers / 20);
+            var j;
+            for (j = 0; j <= numServers; j++) {
+                var x = leftMargin + (j * (penetrationWidth / numServers));
                 ctx.beginPath();
                 ctx.moveTo(x, ctx.canvas.height - bottomMargin);
                 ctx.lineTo(x, ctx.canvas.height - bottomMargin + 5);
                 ctx.stroke();
-    
+
                 if (j % xTickInterval === 0 || j === numServers) {
                     ctx.textAlign = 'center';
                     ctx.fillText(j, x, ctx.canvas.height - bottomMargin + 20);
                 }
             }
-    
+
             // Add ticks on the y-axis (penetration levels)
             ctx.textAlign = 'right';
-            const yTickInterval = Math.ceil((numServers + 1) / 10); // Show a maximum of 10 ticks on the y-axis
-            for (let k = 0; k <= numServers; k++) {
-                const y = ctx.canvas.height - bottomMargin - (k * heightStep);
+            var yTickInterval = Math.ceil((numServers + 1) / 10);
+            var k;
+            for (k = 0; k <= numServers; k++) {
+                var y = ctx.canvas.height - bottomMargin - (k * heightStep);
                 ctx.beginPath();
                 ctx.moveTo(leftMargin, y);
                 ctx.lineTo(leftMargin - 5, y);
                 ctx.stroke();
-    
+
                 if (k % yTickInterval === 0 || k === numServers) {
                     ctx.fillText(k, leftMargin - 10, y + 4);
                 }
             }
-    
+
             // Label x-axis
             ctx.textAlign = 'center';
             ctx.font = '14px Arial';
             ctx.fillText('Servers', leftMargin + penetrationWidth / 2, ctx.canvas.height - bottomMargin + 40);
-    
+
             // Label y-axis
             ctx.save();
-            ctx.translate(leftMargin - 45, ctx.canvas.height / 2); // Moved the label closer
+            ctx.translate(leftMargin - 45, ctx.canvas.height / 2);
             ctx.rotate(-Math.PI / 2);
             ctx.fillText('Penetration Level', 0, 0);
             ctx.restore();
-    
+
             // Draw the penetration lines for each hacker
-            for (let i = 0; i < numHackers; i++) {
-                const color = colors[i % colors.length]; // Line color
+            var i;
+            for (i = 0; i < numHackers; i++) {
+                var color = colors[i % colors.length];
                 ctx.strokeStyle = color;
                 ctx.beginPath();
-    
-                let x = leftMargin;
-                let y = ctx.canvas.height - bottomMargin;
-                ctx.moveTo(x, y); // Starting point
-    
-                for (let j = 0; j < numServers; j++) {
+
+                var xPos = leftMargin;
+                var yPos = ctx.canvas.height - bottomMargin;
+                ctx.moveTo(xPos, yPos);
+
+                for (j = 0; j < numServers; j++) {
                     if (attacks[i][j] === 1) {
-                        ctx.lineTo(x, y - heightStep); // Vertical segment if penetration succeeded
-                        y -= heightStep;
+                        ctx.lineTo(xPos, yPos - heightStep);
+                        yPos -= heightStep;
                     }
-                    x += penetrationWidth / numServers; // Move right for each server
-                    ctx.lineTo(x, y); // Horizontal segment
+                    xPos += penetrationWidth / numServers;
+                    ctx.lineTo(xPos, yPos);
                 }
-    
+
                 ctx.lineWidth = 2;
-                ctx.stroke(); // Draw the line
+                ctx.stroke();
             }
         }
-    
+
         function drawHistogram(ctx, levelCounts, numServers, leftMargin, bottomMargin, topMargin, penetrationWidth, histogramWidth, usableHeight) {
-            const baseX = leftMargin + penetrationWidth + 20; // Starting position of the histogram
-            const barHeight = (usableHeight / (numServers + 1)) - 10; // Height of the histogram bars
-    
+            var baseX = leftMargin + penetrationWidth + 20;
+            var barHeight = (usableHeight / (numServers + 1)) - 10;
+
             // Draw the histogram axis
             ctx.beginPath();
-            ctx.moveTo(baseX, ctx.canvas.height - bottomMargin); // Y-axis of the histogram
+            ctx.moveTo(baseX, ctx.canvas.height - bottomMargin);
             ctx.lineTo(baseX, topMargin);
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 2;
             ctx.stroke();
-    
+
             // Add ticks on the y-axis of the histogram
-            const yTickInterval = Math.ceil((numServers + 1) / 10);
+            var yTickInterval = Math.ceil((numServers + 1) / 10);
             ctx.font = '12px Arial';
             ctx.fillStyle = 'black';
             ctx.textAlign = 'right';
-            for (let k = 0; k <= numServers; k++) {
-                const y = ctx.canvas.height - bottomMargin - (k * (usableHeight / (numServers + 1)));
+            var k;
+            for (k = 0; k <= numServers; k++) {
+                var y = ctx.canvas.height - bottomMargin - (k * (usableHeight / (numServers + 1)));
                 ctx.beginPath();
                 ctx.moveTo(baseX, y);
                 ctx.lineTo(baseX - 5, y);
                 ctx.stroke();
-    
+
                 if (k % yTickInterval === 0 || k === numServers) {
                     ctx.fillText(k, baseX - 10, y + 4);
                 }
             }
-    
+
+            // Find the maximum count
+            var maxCount = 0;
+            var i;
+            for (i = 0; i < levelCounts.length; i++) {
+                if (levelCounts[i] > maxCount) {
+                    maxCount = levelCounts[i];
+                }
+            }
+
             // Draw the histogram bars
-            for (let level = 0; level <= numServers; level++) {
+            var level;
+            for (level = 0; level <= numServers; level++) {
                 if (levelCounts[level] > 0) {
-                    const y = ctx.canvas.height - bottomMargin - (level * (usableHeight / (numServers + 1))) - barHeight / 2;
-                    const barWidth = (levelCounts[level] / Math.max(...levelCounts)) * (histogramWidth - 20);
+                    var yPos = ctx.canvas.height - bottomMargin - (level * (usableHeight / (numServers + 1))) - barHeight / 2;
+                    var barWidth = 0;
+                    if (maxCount > 0) {
+                        barWidth = (levelCounts[level] / maxCount) * (histogramWidth - 20);
+                    }
                     ctx.fillStyle = 'lightblue';
-                    ctx.fillRect(baseX, y - barHeight / 2, barWidth, barHeight);
-    
+                    ctx.fillRect(baseX, yPos - (barHeight / 2), barWidth, barHeight);
+
                     // Draw the count above the bar
                     ctx.fillStyle = 'black';
-                    ctx.fillText(`${levelCounts[level]}`, baseX + barWidth + 10, y + 4);
+                    ctx.fillText(levelCounts[level].toString(), baseX + barWidth + 10, yPos + 4);
                 }
             }
         }

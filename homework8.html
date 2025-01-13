@@ -140,7 +140,6 @@
         .emoji {
             font-size: 30px;
         }
-        /* Additional style for the note */
         .note {
             font-size: 18px;
             color: #555;
@@ -218,10 +217,8 @@
             This program encrypts a given text using the Caesar cipher with a random shift. It then compares the letter frequencies of the encrypted text with those of the English language to estimate the shift used. The assumption is that the most frequent letter in the encrypted text corresponds to the most frequent letter in English.
         </p>
 
-        <!-- Added note about text length -->
         <p class="note">For better accuracy, it's recommended to use texts longer than 100 characters.</p>
 
-        <!-- Top section -->
         <div class="textareas-container">
             <div class="column left">
                 <div class="slider-container">
@@ -239,7 +236,6 @@
             </div>
         </div>
 
-        <!-- Histograms -->
         <div class="histogram-container">
             <div class="histogram">
                 <h2>Standard English Letter Frequencies</h2>
@@ -251,7 +247,6 @@
             </div>
         </div>
 
-        <!-- Bottom section -->
         <div class="estimated-shift">
             <p>The most frequent letter in the encrypted text is '<span id="mostFrequentEncrypted"></span>', while the most frequent letter in English is '<span id="mostFrequentEnglish">E</span>'.</p>
             <p>So we can estimate that a shift of '<span id="estimatedShift"></span>' characters was applied.</p>
@@ -277,7 +272,7 @@
         function updateWordCountValue(value) {
             document.getElementById('wordCountValue').innerText = value;
         }
-        
+
         var commonWords = [
             "the", "be", "to", "of", "and", "a", "in", "that", "have", "I",
             "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
@@ -291,11 +286,12 @@
             "way", "even", "new", "want", "because", "any", "these", "give", "day", "most",
             "us"
         ];
-        
+
         function generateRandomText() {
             var wordCount = document.getElementById('wordCount').value;
             var randomText = "";
-            for (var i = 0; i < wordCount; i++) {
+            var i;
+            for (i = 0; i < wordCount; i++) {
                 var randomIndex = Math.floor(Math.random() * commonWords.length);
                 randomText += commonWords[randomIndex] + " ";
             }
@@ -317,8 +313,8 @@
             drawEnglishHistogram();
             drawEncryptedHistogram(encrypted);
             estimateShift(encrypted);
-            document.getElementById('decryptionResult').innerText = ""; // Clear previous result
-            document.getElementById('decryptedText').value = ""; // Clear previous decrypted text
+            document.getElementById('decryptionResult').innerText = "";
+            document.getElementById('decryptedText').value = "";
         }
 
         function caesarCipher(str, shift) {
@@ -326,7 +322,8 @@
                 var code = char.charCodeAt(0);
                 var lower = (code >= 97);
                 var base = lower ? 97 : 65;
-                return String.fromCharCode(((code - base + shift) % 26) + base);
+                var newCode = ((code - base + shift) % 26) + base;
+                return String.fromCharCode(newCode);
             });
         }
 
@@ -343,10 +340,18 @@
 
         function drawEnglishHistogram() {
             var ctx = document.getElementById('englishHistogram').getContext('2d');
-            var labels = Object.keys(englishFrequencies);
-            var data = Object.values(englishFrequencies);
+            
+            // Ricavo le label e i dati con cicli for
+            var labels = [];
+            var data = [];
+            for (var letter in englishFrequencies) {
+                labels.push(letter);
+                data.push(englishFrequencies[letter]);
+            }
 
-            if (englishChart) englishChart.destroy();
+            if (englishChart) {
+                englishChart.destroy();
+            }
 
             englishChart = new Chart(ctx, {
                 type: 'bar',
@@ -370,12 +375,19 @@
 
         function drawEncryptedHistogram(encryptedText) {
             var ctx = document.getElementById('encryptedHistogram').getContext('2d');
-            var frequencies = getLetterFrequencies(encryptedText);
+            var freqs = getLetterFrequencies(encryptedText);
 
-            var labels = Object.keys(frequencies);
-            var data = Object.values(frequencies);
+            // Ottengo label e data da freqs
+            var labels = [];
+            var data = [];
+            for (var key in freqs) {
+                labels.push(key);
+                data.push(freqs[key]);
+            }
 
-            if (encryptedChart) encryptedChart.destroy();
+            if (encryptedChart) {
+                encryptedChart.destroy();
+            }
 
             encryptedChart = new Chart(ctx, {
                 type: 'bar',
@@ -401,58 +413,89 @@
             var frequencies = {};
             var totalLetters = 0;
             text = text.toUpperCase();
-            for (var i = 0; i < text.length; i++) {
+
+            var i;
+            for (i = 0; i < text.length; i++) {
                 var char = text[i];
                 if (char >= 'A' && char <= 'Z') {
-                    frequencies[char] = (frequencies[char] || 0) + 1;
+                    if (!frequencies[char]) {
+                        frequencies[char] = 1;
+                    } else {
+                        frequencies[char] = frequencies[char] + 1;
+                    }
                     totalLetters++;
                 }
             }
+
+            // Converto conteggi in percentuali
             for (var letter in frequencies) {
-                frequencies[letter] = (frequencies[letter] / totalLetters * 100).toFixed(2);
+                var rawVal = frequencies[letter];
+                var percent = (rawVal / totalLetters) * 100;
+                frequencies[letter] = percent.toFixed(2);
             }
-            for (var i = 65; i <= 90; i++) {
-                var letter = String.fromCharCode(i);
-                if (!frequencies[letter]) {
-                    frequencies[letter] = 0;
+
+            // Aggiungo eventuali lettere mancanti
+            for (var c = 65; c <= 90; c++) {
+                var letterC = String.fromCharCode(c);
+                if (!frequencies[letterC]) {
+                    frequencies[letterC] = 0;
                 }
             }
-            var sortedFrequencies = {};
-            Object.keys(frequencies).sort().forEach(function(key) {
-                sortedFrequencies[key] = frequencies[key];
-            });
-            return sortedFrequencies;
+
+            // Ordino in base al carattere
+            var sorted = {};
+            var lettersArr = [];
+            for (var prop in frequencies) {
+                lettersArr.push(prop);
+            }
+            lettersArr.sort();
+
+            for (var j = 0; j < lettersArr.length; j++) {
+                var l = lettersArr[j];
+                sorted[l] = frequencies[l];
+            }
+
+            return sorted;
         }
 
         function estimateShift(encryptedText) {
-            var frequencies = getLetterFrequencies(encryptedText);
+            var freqs = getLetterFrequencies(encryptedText);
             var maxFreq = 0;
             var mostFrequentLetter = '';
-            for (var letter in frequencies) {
-                if (parseFloat(frequencies[letter]) > maxFreq) {
-                    maxFreq = parseFloat(frequencies[letter]);
+
+            for (var letter in freqs) {
+                var valF = parseFloat(freqs[letter]);
+                if (valF > maxFreq) {
+                    maxFreq = valF;
                     mostFrequentLetter = letter;
                 }
             }
-            document.getElementById('mostFrequentEncrypted').innerText = mostFrequentLetter;
 
-            var estimatedShift = (mostFrequentLetter.charCodeAt(0) - 'E'.charCodeAt(0) + 26) % 26;
+            document.getElementById('mostFrequentEncrypted').innerText = mostFrequentLetter;
+            var asciiEnc = mostFrequentLetter.charCodeAt(0);
+            var asciiE = 'E'.charCodeAt(0);
+            var estimatedShift = (asciiEnc - asciiE + 26) % 26;
             document.getElementById('estimatedShift').innerText = estimatedShift;
         }
 
         function decryptText() {
             var encryptedText = document.getElementById('encryptedTextCopy').value;
-            var estimatedShift = parseInt(document.getElementById('estimatedShift').innerText);
+            var estShiftStr = document.getElementById('estimatedShift').innerText;
+            var estimatedShift = parseInt(estShiftStr);
+
             var decrypted = caesarCipher(encryptedText, 26 - estimatedShift);
             document.getElementById('decryptedText').value = decrypted;
 
+            // Controllo se corrisponde all'originale (ma normalizzo spazi e maiuscole)
             var originalText = document.getElementById('inputText').value.trim().replace(/\s+/g, ' ').toUpperCase();
             var decryptedText = decrypted.trim().replace(/\s+/g, ' ').toUpperCase();
 
             if (originalText === decryptedText) {
-                document.getElementById('decryptionResult').innerHTML = 'The text was decrypted correctly! <span class="emoji">&#128512;</span>';
+                document.getElementById('decryptionResult').innerHTML =
+                    'The text was decrypted correctly! <span class="emoji">&#128512;</span>';
             } else {
-                document.getElementById('decryptionResult').innerHTML = 'The text was not decrypted correctly. <span class="emoji">&#128577;</span>';
+                document.getElementById('decryptionResult').innerHTML =
+                    'The text was not decrypted correctly. <span class="emoji">&#128577;</span>';
             }
         }
     </script>

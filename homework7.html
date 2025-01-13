@@ -292,29 +292,32 @@
     <!-- JavaScript Code -->
     <script>
         window.onload = function() {
-            var meanOfMeansChart; // Chart for the sample means
-            var theoreticalDistributionChart; // Chart for theoretical distribution
+            var meanOfMeansChart;                // Chart for the sample means
+            var theoreticalDistributionChart;    // Chart for theoretical distribution
             var empiricalDistributionCharts = []; // Charts for empirical distributions
+
             var probs = [];
             var labels = [];
             var theoreticalMean = 0;
             var theoreticalVariance = 0;
             var sampleMeans = [];
-            var sampleVariances = []; // Array to store variances of each sample
-            var sampleCounts = []; // Array of counts for each sample
-            var numSamplesInput = document.getElementById('numSamplesInput'); // m
-            var sampleSizeInput = document.getElementById('sampleSizeInput'); // n
-            var numIntervalsInput = document.getElementById('numIntervals');
-            var inputs;
-            var maxVisibleProbs = 3;
+            var sampleVariances = [];
+            var sampleCounts = [];
 
-            // Event listener for number of intervals change
+            var numSamplesInput = document.getElementById('numSamplesInput');
+            var sampleSizeInput = document.getElementById('sampleSizeInput');
+            var numIntervalsInput = document.getElementById('numIntervals');
+            var inputs;    // references to the probability input fields
+            var maxVisibleProbs = 3; // not strictly used here, but left for consistency
+
+            // Event: update probability input fields when intervals change
             numIntervalsInput.oninput = function() {
                 generateProbabilities();
             };
 
-            // Event listener for start simulation button
-            document.getElementById("startSimulation").onclick = function() {
+            // Event: start simulation button
+            var startSimulationButton = document.getElementById('startSimulation');
+            startSimulationButton.onclick = function() {
                 if (!checkSum()) {
                     alert('Please ensure the probabilities sum to 1.');
                     return;
@@ -322,10 +325,10 @@
                 startSimulation();
             };
 
-            // Initial calls
+            // Generate initial probability inputs
             generateProbabilities();
 
-            function generateProbabilities(){
+            function generateProbabilities() {
                 var numIntervals = parseInt(numIntervalsInput.value);
                 if (isNaN(numIntervals) || numIntervals <= 0) {
                     alert('Please enter a valid number of intervals.');
@@ -333,105 +336,124 @@
                 }
 
                 var probabilitiesDiv = document.querySelector('.probabilities');
-                probabilitiesDiv.innerHTML = ''; // Clear previous content
+                probabilitiesDiv.innerHTML = '';
 
-                // Generate random probabilities that sum exactly to 1
-                do {
-                    probs = [];
-                    var total = 0;
-                    for (var i = 0; i < numIntervals; i++) {
-                        var p = Math.random();
-                        probs.push(p);
-                        total += p;
-                    }
-                    // Normalize probabilities
-                    for (var i = 0; i < numIntervals; i++) {
-                        probs[i] = probs[i] / total;
-                        probs[i] = parseFloat(probs[i].toFixed(2)); // Limit to 2 decimal places
-                    }
-                    // Adjust the last probability to ensure the sum is exactly 1
-                    var sumProbs = probs.reduce(function(a, b) { return a + b; }, 0);
-                    var diff = 1 - sumProbs;
-                    probs[numIntervals - 1] += diff;
-                    probs[numIntervals - 1] = parseFloat(probs[numIntervals - 1].toFixed(2));
+                // Faccio un ciclo "do-while" per generare probabilità random che sommino a 1
+                var isValidProbs = false;
+                var trialProbs = [];
 
-                    // Adjust any rounding errors
-                    var finalSum = probs.reduce(function(a, b) { return a + b; }, 0);
-                    if (Math.abs(finalSum - 1) > 0.0001) {
-                        probs[numIntervals - 1] += 1 - finalSum;
-                        probs[numIntervals - 1] = parseFloat(probs[numIntervals - 1].toFixed(2));
+                while (!isValidProbs) {
+                    trialProbs = [];
+                    var sumTmp = 0;
+                    var i;
+                    for (i = 0; i < numIntervals; i++) {
+                        var pRand = Math.random();
+                        trialProbs.push(pRand);
+                        sumTmp += pRand;
                     }
-                    // Ensure probabilities are valid and sum to 1
-                } while (!validateProbabilities(probs));
+                    // normalizzo
+                    for (i = 0; i < numIntervals; i++) {
+                        trialProbs[i] = trialProbs[i] / sumTmp;
+                        trialProbs[i] = parseFloat(trialProbs[i].toFixed(2));
+                    }
 
-                // Create inputs for probabilities
+                    // aggiusto l'ultima
+                    var sumCheck = 0;
+                    for (i = 0; i < trialProbs.length; i++) {
+                        sumCheck += trialProbs[i];
+                    }
+                    sumCheck = parseFloat(sumCheck.toFixed(2));
+                    var diff = 1 - sumCheck;
+                    trialProbs[trialProbs.length - 1] += diff;
+                    trialProbs[trialProbs.length - 1] = parseFloat(trialProbs[trialProbs.length - 1].toFixed(2));
+
+                    // ricontrollo
+                    var finalSum = 0;
+                    for (i = 0; i < trialProbs.length; i++) {
+                        finalSum += trialProbs[i];
+                    }
+                    finalSum = parseFloat(finalSum.toFixed(2));
+
+                    if (Math.abs(finalSum - 1) <= 0.0001) {
+                        var inRange = true;
+                        for (i = 0; i < trialProbs.length; i++) {
+                            if (trialProbs[i] < 0 || trialProbs[i] > 1 || isNaN(trialProbs[i])) {
+                                inRange = false;
+                                break;
+                            }
+                        }
+                        if (inRange) {
+                            isValidProbs = true;
+                        }
+                    }
+                }
+
+                // Salvo in probs
+                probs = trialProbs;
+
+                // Ora genero gli input nel DOM
                 var probInputsDiv = document.createElement('div');
                 probInputsDiv.classList.add('prob-inputs');
 
-                for (var i = 0; i < numIntervals; i++) {
-                    var div = document.createElement('div');
-                    div.classList.add('form-group');
+                for (var idx = 0; idx < numIntervals; idx++) {
+                    var outerDiv = document.createElement('div');
+                    outerDiv.classList.add('form-group');
+
                     var label = document.createElement('label');
-                    label.innerHTML = 'p' + (i+1) + ': ';
+                    label.innerHTML = 'p' + (idx + 1) + ': ';
+
                     var input = document.createElement('input');
                     input.type = 'number';
                     input.step = '0.01';
-                    input.value = probs[i].toFixed(2);
+                    input.value = probs[idx].toFixed(2);
                     input.min = '0';
                     input.max = '1';
                     input.classList.add('form-control');
 
-                    // Add event listener to check the sum when the value changes
+                    // Ogni volta che cambio l'input, rifaccio checkSum
                     input.oninput = function() {
-                        // Ensure two decimal places
                         if (this.value !== '') {
-                            this.value = parseFloat(this.value).toFixed(2);
+                            var floatVal = parseFloat(this.value);
+                            if (!isNaN(floatVal)) {
+                                this.value = floatVal.toFixed(2);
+                            }
                         }
                         checkSum();
                     };
 
-                    div.appendChild(label);
-                    div.appendChild(input);
-                    probInputsDiv.appendChild(div);
+                    outerDiv.appendChild(label);
+                    outerDiv.appendChild(input);
+                    probInputsDiv.appendChild(outerDiv);
                 }
-                probabilitiesDiv.appendChild(probInputsDiv);
 
+                probabilitiesDiv.appendChild(probInputsDiv);
                 inputs = probInputsDiv.querySelectorAll('input[type="number"]');
 
-                // Adjust the width of the probabilities container
-                probabilitiesDiv.style.maxWidth = '200px';
-
+                // Verifico la somma
                 checkSum();
-            }
-
-            function validateProbabilities(probsArray) {
-                var total = probsArray.reduce(function(a, b) { return a + b; }, 0);
-                total = parseFloat(total.toFixed(2));
-                if (Math.abs(total - 1) > 0.0001) {
-                    return false;
-                }
-                for (var i = 0; i < probsArray.length; i++) {
-                    if (probsArray[i] < 0 || probsArray[i] > 1 || isNaN(probsArray[i])) {
-                        return false;
-                    }
-                }
-                return true;
             }
 
             function checkSum() {
                 var invalidMessage = document.getElementById('invalidMessage');
                 var total = 0;
-                var valid = true;
+                var isValid = true;
+
+                if (!inputs) {
+                    return false;
+                }
+
                 for (var i = 0; i < inputs.length; i++) {
                     var val = parseFloat(inputs[i].value);
                     if (isNaN(val) || val < 0 || val > 1) {
-                        valid = false;
+                        isValid = false;
                         break;
                     }
                     total += val;
                 }
+
                 total = parseFloat(total.toFixed(2));
-                if (!valid || Math.abs(total - 1) > 0.01) {
+
+                if (!isValid || Math.abs(total - 1) > 0.01) {
                     invalidMessage.innerHTML = 'Invalid values: probabilities must sum to 1.';
                     return false;
                 } else {
@@ -441,143 +463,186 @@
             }
 
             function startSimulation() {
-                var m = parseInt(numSamplesInput.value); // Number of samples
-                var n = parseInt(sampleSizeInput.value); // Sample size
+                var m = parseInt(numSamplesInput.value);
+                var n = parseInt(sampleSizeInput.value);
+
                 if (isNaN(m) || m <= 0 || isNaN(n) || n <= 0) {
                     alert('Please enter valid numbers for the number of samples and sample size.');
                     return;
                 }
 
-                // Get probabilities
+                // Aggiorno probs dalla UI
                 probs = [];
-                for (var i = 0; i < inputs.length; i++) {
+                var i;
+                for (i = 0; i < inputs.length; i++) {
                     var val = parseFloat(inputs[i].value);
                     probs.push(val);
                 }
 
-                // Compute theoretical mean and variance
+                // Calcolo media e varianza teorica
                 theoreticalMean = 0;
                 theoreticalVariance = 0;
-                for (var i = 0; i < probs.length; i++) {
-                    var x = i + 1; // Assuming x_i = i + 1
-                    theoreticalMean += x * probs[i];
+                for (i = 0; i < probs.length; i++) {
+                    var xVal = i + 1;
+                    theoreticalMean += xVal * probs[i];
                 }
-                for (var i = 0; i < probs.length; i++) {
-                    var x = i + 1;
-                    theoreticalVariance += probs[i] * Math.pow(x - theoreticalMean, 2);
+                for (i = 0; i < probs.length; i++) {
+                    var xVal2 = i + 1;
+                    var diff = (xVal2 - theoreticalMean);
+                    theoreticalVariance += probs[i] * (diff * diff);
                 }
 
-                // Prepare labels
+                // Preparo le etichette
                 labels = [];
-                for (var i = 0; i < probs.length; i++) {
+                for (i = 0; i < probs.length; i++) {
                     labels.push('Value ' + (i + 1));
                 }
 
-                // Clear previous sample means, variances, and counts
+                // Svuoto i vecchi sample means, varianze e counts
                 sampleMeans = [];
                 sampleVariances = [];
                 sampleCounts = [];
 
-                // Prepare cumulative probabilities
+                // Preparo le cumulative probabilities
                 var cumulativeProbs = [];
-                var cumulativeSum = 0;
-                for (var i = 0; i < probs.length; i++) {
-                    cumulativeSum += probs[i];
-                    cumulativeProbs.push(cumulativeSum);
+                var csum = 0;
+                for (i = 0; i < probs.length; i++) {
+                    csum += probs[i];
+                    cumulativeProbs.push(csum);
                 }
 
-                // Generate m samples, each of size n
-                for (var i = 0; i < m; i++) {
+                // Genero m campioni, ognuno di dimensione n
+                for (var sampleIdx = 0; sampleIdx < m; sampleIdx++) {
                     var sample = [];
-                    var counts = new Array(probs.length).fill(0); // Counts for this sample
+                    var counts = [];
+                    var ci;
+                    for (ci = 0; ci < probs.length; ci++) {
+                        counts.push(0);
+                    }
+
                     for (var j = 0; j < n; j++) {
-                        // Generate one observation
                         var rand = Math.random();
+                        var foundIndex = -1;
                         for (var k = 0; k < cumulativeProbs.length; k++) {
                             if (rand <= cumulativeProbs[k]) {
-                                var x = k + 1;
-                                sample.push(x);
-                                counts[k]++;
+                                foundIndex = k;
                                 break;
                             }
                         }
+                        if (foundIndex >= 0) {
+                            var xVal3 = foundIndex + 1;
+                            sample.push(xVal3);
+                            counts[foundIndex] = counts[foundIndex] + 1;
+                        }
                     }
-                    // Compute sample mean
-                    var sampleMean = sample.reduce(function(a, b) { return a + b; }, 0) / n;
-                    sampleMeans.push(parseFloat(sampleMean.toFixed(2))); // Round to 2 decimal places
 
-                    // Compute sample variance
-                    var mean = sampleMean;
-                    var variance = sample.reduce(function(acc, val) {
-                        return acc + Math.pow(val - mean, 2);
-                    }, 0) / (n - 1);
-                    sampleVariances.push(variance);
+                    // Media campione
+                    var sumSample = 0;
+                    for (var smp = 0; smp < sample.length; smp++) {
+                        sumSample += sample[smp];
+                    }
+                    var sampleMean = sumSample / n;
+                    sampleMean = parseFloat(sampleMean.toFixed(2));
+                    sampleMeans.push(sampleMean);
+
+                    // Varianza campione
+                    var varSum = 0;
+                    for (var idx = 0; idx < sample.length; idx++) {
+                        var varDiff = sample[idx] - sampleMean;
+                        varSum += (varDiff * varDiff);
+                    }
+                    var sampleVariance = 0;
+                    if (n > 1) {
+                        sampleVariance = varSum / (n - 1);
+                    }
+                    sampleVariances.push(sampleVariance);
 
                     sampleCounts.push(counts);
                 }
 
-                // Compute mean of sample means and mean of sample variances
-                var meanOfMeans = sampleMeans.reduce(function(a, b) { return a + b; }, 0) / m;
-                var meanOfVariances = sampleVariances.reduce(function(a, b) { return a + b; }, 0) / m;
+                // Calcolo la media delle medie e la media delle varianze
+                var meanOfMeans = 0;
+                for (i = 0; i < sampleMeans.length; i++) {
+                    meanOfMeans += sampleMeans[i];
+                }
+                meanOfMeans = meanOfMeans / sampleMeans.length;
 
-                // Display stats
+                var meanOfVariances = 0;
+                for (i = 0; i < sampleVariances.length; i++) {
+                    meanOfVariances += sampleVariances[i];
+                }
+                meanOfVariances = meanOfVariances / sampleVariances.length;
+
+                // Mostro i dati
                 displayTheoreticalStats(theoreticalMean, theoreticalVariance);
                 displayStats(meanOfMeans, meanOfVariances);
 
-                // Update charts
                 updateMeanOfMeansChart();
                 updateTheoreticalDistributionChart();
                 updateEmpiricalDistributions();
 
-                // Show the hidden sections
                 showResults();
             }
 
-            function displayTheoreticalStats(theoreticalMean, theoreticalVariance) {
+            function displayTheoreticalStats(theorMean, theorVariance) {
                 var theoreticalStatsDisplay = document.getElementById('theoreticalStatsDisplay');
-                theoreticalStatsDisplay.innerHTML = `
-                    Theoretical Mean: <span>${theoreticalMean.toFixed(2)}</span> &nbsp;&nbsp; | &nbsp;&nbsp;
-                    Theoretical Variance: <span>${theoreticalVariance.toFixed(2)}</span>
-                `;
+                theoreticalStatsDisplay.innerHTML = ''
+                    + 'Theoretical Mean: <span>' + theorMean.toFixed(2) + '</span> &nbsp;&nbsp; | &nbsp;&nbsp;'
+                    + 'Theoretical Variance: <span>' + theorVariance.toFixed(2) + '</span>';
             }
 
             function displayStats(meanOfMeans, meanOfVariances) {
                 var statsDisplay = document.getElementById('statsDisplay');
-                statsDisplay.innerHTML = `
-                    Mean of Means: <span>${meanOfMeans.toFixed(2)}</span> &nbsp;&nbsp; | &nbsp;&nbsp;
-                    Mean of Variances: <span>${meanOfVariances.toFixed(2)}</span>
-                `;
+                statsDisplay.innerHTML = ''
+                    + 'Mean of Means: <span>' + meanOfMeans.toFixed(2) + '</span>'
+                    + ' &nbsp;&nbsp; | &nbsp;&nbsp; '
+                    + 'Mean of Variances: <span>' + meanOfVariances.toFixed(2) + '</span>';
             }
 
             function updateMeanOfMeansChart() {
-                // Destroy previous chart if it exists
                 if (meanOfMeansChart) {
                     meanOfMeansChart.destroy();
                 }
 
-                // Count frequencies of sample means (rounded to 2 decimal places)
+                // Frequency map
                 var frequencyMap = {};
-                for (var i = 0; i < sampleMeans.length; i++) {
-                    var mean = sampleMeans[i];
-                    if (frequencyMap[mean]) {
-                        frequencyMap[mean]++;
+                var i;
+                for (i = 0; i < sampleMeans.length; i++) {
+                    var key = sampleMeans[i];
+                    if (!frequencyMap[key]) {
+                        frequencyMap[key] = 1;
                     } else {
-                        frequencyMap[mean] = 1;
+                        frequencyMap[key] = frequencyMap[key] + 1;
                     }
                 }
 
-                // Prepare data for chart
-                var meanValues = Object.keys(frequencyMap).map(parseFloat).sort(function(a, b) { return a - b; });
-                var frequencies = meanValues.map(function(mean) {
-                    return frequencyMap[mean];
-                });
+                var meanValues = [];
+                for (var prop in frequencyMap) {
+                    meanValues.push(parseFloat(prop));
+                }
+                // Sort them
+                var j;
+                for (i = 0; i < meanValues.length - 1; i++) {
+                    for (j = i + 1; j < meanValues.length; j++) {
+                        if (meanValues[i] > meanValues[j]) {
+                            var tmp = meanValues[i];
+                            meanValues[i] = meanValues[j];
+                            meanValues[j] = tmp;
+                        }
+                    }
+                }
+
+                var frequencies = [];
+                for (i = 0; i < meanValues.length; i++) {
+                    var val = meanValues[i];
+                    frequencies.push(frequencyMap[val]);
+                }
 
                 var meanOfMeansCtx = document.getElementById('meanOfMeansChart').getContext('2d');
-
                 meanOfMeansChart = new Chart(meanOfMeansCtx, {
                     type: 'bar',
                     data: {
-                        labels: meanValues.map(function(mean) { return mean.toFixed(2); }),
+                        labels: makeLabelsFromMeans(meanValues),
                         datasets: [{
                             label: 'Frequency',
                             data: frequencies,
@@ -603,14 +668,27 @@
                 });
             }
 
+            function makeLabelsFromMeans(meanVals) {
+                var arr = [];
+                for (var i = 0; i < meanVals.length; i++) {
+                    arr.push(meanVals[i].toFixed(2));
+                }
+                return arr;
+            }
+
             function updateTheoreticalDistributionChart() {
-                // Destroy previous chart if it exists
                 if (theoreticalDistributionChart) {
                     theoreticalDistributionChart.destroy();
                 }
 
-                // Theoretical counts based on probabilities
-                var theoreticalCounts = probs.map(function(p) { return p * sampleSizeInput.value; });
+                var sampleSize = parseInt(sampleSizeInput.value);
+
+                // Theoretical counts in base a p * n
+                var theoreticalCounts = [];
+                var i;
+                for (i = 0; i < probs.length; i++) {
+                    theoreticalCounts.push(probs[i] * sampleSize);
+                }
 
                 var theoreticalCtx = document.getElementById('theoreticalDistributionChart').getContext('2d');
 
@@ -645,16 +723,15 @@
 
             function updateEmpiricalDistributions() {
                 var empiricalGrid = document.getElementById('empiricalDistributionsGrid');
-                empiricalGrid.innerHTML = ''; // Clear previous charts
-                empiricalDistributionCharts = []; // Reset charts array
+                empiricalGrid.innerHTML = '';
+                empiricalDistributionCharts = [];
 
-                // Limit the number of charts to display for performance reasons
-                var chartsToDisplay = sampleCounts.length;
+                var totalSamples = sampleCounts.length;
+                var i;
+                for (i = 0; i < totalSamples; i++) {
+                    var thisCounts = sampleCounts[i];
 
-                for (var i = 0; i < chartsToDisplay; i++) {
-                    var counts = sampleCounts[i];
-
-                    // Create a canvas element for each chart
+                    // Creo container + canvas
                     var chartContainer = document.createElement('div');
                     chartContainer.classList.add('empirical-distribution-chart');
 
@@ -665,15 +742,18 @@
 
                     var ctx = canvas.getContext('2d');
 
-                    var chart = new Chart(ctx, {
+                    var backgroundColor = 'rgba(255, 182, 193, 0.6)';
+                    var borderColor = 'rgba(255, 182, 193, 1)';
+
+                    var newChart = new Chart(ctx, {
                         type: 'bar',
                         data: {
                             labels: labels,
                             datasets: [{
                                 label: 'Sample ' + (i + 1),
-                                data: counts,
-                                backgroundColor: 'rgba(255, 182, 193, 0.6)', // Pastel Pink
-                                borderColor: 'rgba(255, 182, 193, 1)',
+                                data: thisCounts,
+                                backgroundColor: backgroundColor,
+                                borderColor: borderColor,
                                 borderWidth: 1
                             }]
                         },
@@ -694,12 +774,11 @@
                         }
                     });
 
-                    empiricalDistributionCharts.push(chart);
+                    empiricalDistributionCharts.push(newChart);
                 }
             }
 
             function showResults() {
-                // Remove the 'hidden' class from the sections to make them visible
                 document.getElementById('theoreticalStatsDisplay').classList.remove('hidden');
                 document.getElementById('statsDisplay').classList.remove('hidden');
                 document.getElementById('meanOfMeansSection').classList.remove('hidden');

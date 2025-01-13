@@ -206,7 +206,7 @@
     <button onclick="computeIntegrals()">Compute</button>
 </div>
 <div class="row">
-    <div class="chart-and-results">
+    <div class="chart-and-results" style="display: flex; width: 100%; justify-content: space-between; gap: 20px;">
         <div class="chart-section">
             <canvas id="chartCanvas"></canvas>
         </div>
@@ -307,109 +307,155 @@ Variance: <span id="varianceResult">0.000000</span>
 </style>
 
 <script>
-let chartInstance;
+var chartInstance;
 
 function renderEmptyChart() {
-  const ctx = document.getElementById('chartCanvas').getContext('2d');
+    var ctx = document.getElementById('chartCanvas').getContext('2d');
+    var defaultLabels = [];
+    var defaultData = [];
+    var i;
+    for (i = 0; i < 100; i++) {
+        defaultLabels.push((i / 100).toFixed(2));
+        defaultData.push(0);
+    }
 
-  chartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: Array.from({ length: 100 }, (_, i) => (i / 100).toFixed(2)),
-      datasets: [
-        {
-          label: 'f(x)',
-          data: Array(100).fill(0),
-          borderColor: 'blue',
-          borderWidth: 2,
-          fill: false,
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: defaultLabels,
+            datasets: [
+                {
+                    label: 'f(x)',
+                    data: defaultData,
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    fill: false
+                }
+            ]
         },
-      ],
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: true } },
-      scales: {
-        x: { title: { display: true, text: 'x' } },
-        y: { title: { display: true, text: 'f(x)' } },
-      },
-    },
-  });
+        options: {
+            responsive: true,
+            plugins: { legend: { display: true } },
+            scales: {
+                x: { title: { display: true, text: 'x' } },
+                y: { title: { display: true, text: 'f(x)' } }
+            }
+        }
+    });
 }
 
 function computeIntegrals() {
-  const f = new Function('x', 'return ' + document.getElementById('distribution').value);
-  const a = parseFloat(document.getElementById('a').value);
-  const b = parseFloat(document.getElementById('b').value);
-  const n = parseInt(document.getElementById('intervals').value);
+    var funcString = document.getElementById('distribution').value;
+    var f = new Function('x', 'return ' + funcString);
 
-  const dx = (b - a) / n;
-  let riemannSum = 0;
-  let lebesgueSum = 0;
-  let mean = 0;
-  let meanSquare = 0;
+    var a = parseFloat(document.getElementById('a').value);
+    var b = parseFloat(document.getElementById('b').value);
+    var n = parseInt(document.getElementById('intervals').value);
 
-  const values = [];
-  for (let i = 0; i < n; i++) {
-    const x = a + i * dx;
-    const fx = f(x);
-    values.push({ x, fx });
+    var dx = (b - a) / n;
+    var riemannSum = 0;
+    var lebesgueSum = 0;
 
-    riemannSum += fx * dx;
-    mean += x * fx;
-    meanSquare += x * x * fx;
-  }
+    var mean = 0;
+    var meanSquare = 0;
 
-  mean /= riemannSum;
-  meanSquare /= riemannSum;
-  const variance = meanSquare - mean * mean;
+    var values = [];
+    var i;
+    for (i = 0; i < n; i++) {
+        var x = a + i * dx;
+        var fx = f(x);
+        var obj = { x: x, fx: fx };
+        values.push(obj);
 
-  values.sort((a, b) => a.fx - b.fx);
-  for (let i = 1; i < values.length; i++) {
-    const dfx = values[i].fx - values[i - 1].fx;
-    lebesgueSum += values[i - 1].fx * dfx;
-  }
+        // Riemann sum
+        riemannSum += fx * dx;
 
-  document.getElementById('riemannResult').textContent = riemannSum.toFixed(6);
-  document.getElementById('lebesgueResult').textContent = lebesgueSum.toFixed(6);
-  document.getElementById('difference').textContent = Math.abs(riemannSum - lebesgueSum).toFixed(6);
-  document.getElementById('meanResult').textContent = mean.toFixed(6);
-  document.getElementById('varianceResult').textContent = variance.toFixed(6);
+        // Weighted sums for mean and meanSquare
+        mean += x * fx;
+        meanSquare += x * x * fx;
+    }
 
-  renderChart(values.map(v => v.x), values.map(v => v.fx));
-  MathJax.typeset();
+    // Weighted means => we consider the "weight" as f(x)
+    // So the "sum of weights" is basically the integral's value (riemannSum).
+    mean = mean / riemannSum;
+    meanSquare = meanSquare / riemannSum;
+    var variance = meanSquare - mean * mean;
+
+    // Sort by fx to approximate Lebesgue integral
+    values.sort(function(a, b) {
+        return a.fx - b.fx;
+    });
+
+    for (i = 1; i < values.length; i++) {
+        var dfx = values[i].fx - values[i - 1].fx;
+        lebesgueSum += values[i - 1].fx * dfx;
+    }
+
+    document.getElementById('riemannResult').textContent = riemannSum.toFixed(6);
+    document.getElementById('lebesgueResult').textContent = lebesgueSum.toFixed(6);
+    document.getElementById('difference').textContent = Math.abs(riemannSum - lebesgueSum).toFixed(6);
+    document.getElementById('meanResult').textContent = mean.toFixed(6);
+    document.getElementById('varianceResult').textContent = variance.toFixed(6);
+
+    // Build arrays for chart
+    var xVals = [];
+    var yVals = [];
+    for (i = 0; i < values.length; i++) {
+        xVals.push(values[i].x);
+        yVals.push(values[i].fx);
+    }
+
+    renderChart(xVals, yVals);
+
+    // Ritocco MathJax se serve
+    if (window.MathJax && MathJax.typeset) {
+        MathJax.typeset();
+    }
 }
 
 function renderChart(xValues, yValues) {
-  const ctx = document.getElementById('chartCanvas').getContext('2d');
+    var ctx = document.getElementById('chartCanvas').getContext('2d');
 
-  if (chartInstance) {
-    chartInstance.destroy();
-  }
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
 
-  chartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: xValues.map(x => x.toFixed(2)),
-      datasets: [
-        {
-          label: 'f(x)',
-          data: yValues,
-          borderColor: 'blue',
-          borderWidth: 2,
-          fill: false,
+    // Convert xValues to label strings
+    var labelStrings = [];
+    var i;
+    for (i = 0; i < xValues.length; i++) {
+        labelStrings.push(xValues[i].toFixed(2));
+    }
+
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labelStrings,
+            datasets: [
+                {
+                    label: 'f(x)',
+                    data: yValues,
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    fill: false
+                }
+            ]
         },
-      ],
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: true } },
-      scales: {
-        x: { title: { display: true, text: 'x' } },
-        y: { title: { display: true, text: 'f(x)' } },
-      },
-    },
-  });
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'x' }
+                },
+                y: {
+                    title: { display: true, text: 'f(x)' }
+                }
+            }
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', renderEmptyChart);

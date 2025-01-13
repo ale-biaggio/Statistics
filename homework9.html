@@ -314,14 +314,13 @@
         </p>
     </div>
     
-
     <br>
     <!-- Practical Exercise Section -->
     <div class="container mt-5 center-align">
         <h1>Sampling Variance Simulator</h1>
         <!-- Instructions -->
         <p>This simulator generates <strong>m</strong> samples of size <strong>n</strong> from a discrete univariate probability distribution with arbitrary probabilities. It computes the distribution of the sample variances and displays the theoretical and empirical distributions.</p>
-        <!-- Inputs Container -->
+        
         <div class="inputs-container mt-4">
             <div class="inputs-row">
                 <!-- Number of Intervals -->
@@ -354,16 +353,12 @@
             <!-- Invalid Message -->
             <div id="invalidMessage" class="text-center mt-2"></div>
         </div>
-        <!-- Graphs Container -->
+        
         <div class="graphs-container">
             <!-- Theoretical Mean and Variance Display -->
-            <div class="stats-display hidden" id="theoreticalStatsDisplay">
-                <!-- Theoretical Mean and Variance will be displayed here -->
-            </div>
+            <div class="stats-display hidden" id="theoreticalStatsDisplay"></div>
             <!-- Mean and Variance Display -->
-            <div class="stats-display hidden" id="statsDisplay">
-                <!-- Mean of Sample Variances and Variance of Sample Variances will be displayed here -->
-            </div>
+            <div class="stats-display hidden" id="statsDisplay"></div>
             <!-- Distribution of Sample Variances Graph -->
             <div class="graph-section hidden" id="varianceDistributionSection">
                 <h3>Distribution of Sample Variances</h3>
@@ -378,41 +373,42 @@
             <div class="graph-section hidden" id="empiricalDistributionsSection">
                 <h3>Empirical Distributions of Samples</h3>
                 <div class="empirical-distributions-container">
-                    <div class="empirical-distributions-grid" id="empiricalDistributionsGrid">
-                        <!-- Empirical distribution charts will be generated here -->
-                    </div>
+                    <div class="empirical-distributions-grid" id="empiricalDistributionsGrid"></div>
                     <!-- Additional samples message -->
                     <div id="additionalSamplesMessage"></div>
                 </div>
             </div>
         </div>
     </div>
-    <!-- JavaScript Code -->
+    
     <script>
         window.onload = function() {
-            var varianceDistributionChart; // Chart for the sample variances
-            var theoreticalDistributionChart; // Chart for theoretical distribution
-            var empiricalDistributionCharts = []; // Charts for empirical distributions
+            var varianceDistributionChart;
+            var theoreticalDistributionChart;
+            var empiricalDistributionCharts = [];
+
             var probs = [];
             var labels = [];
             var theoreticalMean = 0;
             var theoreticalVariance = 0;
-            var theoreticalVarianceOfVariances = 0; // Theoretical variance of sample variances
-            var sampleVariances = []; // Array to store variances of each sample
-            var sampleCounts = []; // Array of counts for each sample
-            var numSamplesInput = document.getElementById('numSamplesInput'); // m
-            var sampleSizeInput = document.getElementById('sampleSizeInput'); // n
+            var theoreticalVarianceOfVariances = 0;
+
+            var sampleVariances = [];
+            var sampleCounts = [];
+
+            var numSamplesInput = document.getElementById('numSamplesInput');
+            var sampleSizeInput = document.getElementById('sampleSizeInput');
             var numIntervalsInput = document.getElementById('numIntervals');
+
             var inputs;
             var maxVisibleProbs = 3;
-            var maxDistributionsDisplay = 10; // Maximum number of empirical distributions to display
+            var maxDistributionsDisplay = 10; // max number of sample distributions shown
 
-            // Event listener for number of intervals change
+            // On intervals change, regenerate probabilities
             numIntervalsInput.oninput = function() {
                 generateProbabilities();
             };
 
-            // Event listener for start simulation button
             document.getElementById("startSimulation").onclick = function() {
                 if (!checkSum()) {
                     alert('Please ensure the probabilities sum to 1.');
@@ -421,10 +417,9 @@
                 startSimulation();
             };
 
-            // Initial calls
             generateProbabilities();
 
-            function generateProbabilities(){
+            function generateProbabilities() {
                 var numIntervals = parseInt(numIntervalsInput.value);
                 if (isNaN(numIntervals) || numIntervals <= 0) {
                     alert('Please enter a valid number of intervals.');
@@ -432,96 +427,111 @@
                 }
 
                 var probabilitiesDiv = document.querySelector('.probabilities');
-                probabilitiesDiv.innerHTML = ''; // Clear previous content
+                probabilitiesDiv.innerHTML = '';
 
-                // Generate random probabilities that sum exactly to 1
-                do {
+                // Genero probabilità random che sommino a 1
+                var isValid = false;
+                while (!isValid) {
                     probs = [];
-                    var total = 0;
-                    for (var i = 0; i < numIntervals; i++) {
-                        var p = Math.random();
-                        probs.push(p);
-                        total += p;
+                    var sumTemp = 0;
+                    var i;
+                    for (i = 0; i < numIntervals; i++) {
+                        var pRand = Math.random();
+                        probs.push(pRand);
+                        sumTemp += pRand;
                     }
-                    // Normalize probabilities
-                    for (var i = 0; i < numIntervals; i++) {
-                        probs[i] = probs[i] / total;
-                        probs[i] = parseFloat(probs[i].toFixed(2)); // Limit to 2 decimal places
+                    // Normalizzo
+                    for (i = 0; i < numIntervals; i++) {
+                        var normVal = probs[i] / sumTemp;
+                        normVal = parseFloat(normVal.toFixed(2));
+                        probs[i] = normVal;
                     }
-                    // Adjust the last probability to ensure the sum is exactly 1
-                    var sumProbs = probs.reduce(function(a, b) { return a + b; }, 0);
-                    var diff = 1 - sumProbs;
-                    probs[numIntervals - 1] += diff;
-                    probs[numIntervals - 1] = parseFloat(probs[numIntervals - 1].toFixed(2));
 
-                    // Adjust any rounding errors
-                    var finalSum = probs.reduce(function(a, b) { return a + b; }, 0);
-                    if (Math.abs(finalSum - 1) > 0.0001) {
-                        probs[numIntervals - 1] += 1 - finalSum;
-                        probs[numIntervals - 1] = parseFloat(probs[numIntervals - 1].toFixed(2));
+                    // Aggiusto l'ultima in modo da avere sum=1
+                    var sumCheck = 0;
+                    var j;
+                    for (j = 0; j < probs.length; j++) {
+                        sumCheck += probs[j];
                     }
-                    // Ensure probabilities are valid and sum to 1
-                } while (!validateProbabilities(probs));
+                    sumCheck = parseFloat(sumCheck.toFixed(2));
+                    var diff = 1 - sumCheck;
+                    var lastVal = probs[probs.length - 1] + diff;
+                    lastVal = parseFloat(lastVal.toFixed(2));
+                    probs[probs.length - 1] = lastVal;
 
-                // Create inputs for probabilities
+                    // Ricontrollo sum finale
+                    var finalSum = 0;
+                    var k;
+                    for (k = 0; k < probs.length; k++) {
+                        finalSum += probs[k];
+                    }
+                    finalSum = parseFloat(finalSum.toFixed(2));
+
+                    var inRange = true;
+                    if (Math.abs(finalSum - 1) <= 0.0001) {
+                        for (k = 0; k < probs.length; k++) {
+                            if (probs[k] < 0 || probs[k] > 1 || isNaN(probs[k])) {
+                                inRange = false;
+                                break;
+                            }
+                        }
+                        if (inRange) {
+                            isValid = true;
+                        }
+                    }
+                }
+
+                // Creo input per p[i]
                 var probInputsDiv = document.createElement('div');
                 probInputsDiv.classList.add('prob-inputs');
 
-                for (var i = 0; i < numIntervals; i++) {
-                    var div = document.createElement('div');
-                    div.classList.add('form-group');
+                var idx;
+                for (idx = 0; idx < numIntervals; idx++) {
+                    var outerDiv = document.createElement('div');
+                    outerDiv.classList.add('form-group');
+
                     var label = document.createElement('label');
-                    label.innerHTML = 'p' + (i+1) + ': ';
+                    label.innerHTML = 'p' + (idx + 1) + ': ';
+
                     var input = document.createElement('input');
                     input.type = 'number';
                     input.step = '0.01';
-                    input.value = probs[i].toFixed(2);
+                    input.value = probs[idx].toFixed(2);
                     input.min = '0';
                     input.max = '1';
                     input.classList.add('form-control');
 
-                    // Add event listener to check the sum when the value changes
                     input.oninput = function() {
-                        // Ensure two decimal places
                         if (this.value !== '') {
-                            this.value = parseFloat(this.value).toFixed(2);
+                            var floatVal = parseFloat(this.value);
+                            if (!isNaN(floatVal)) {
+                                this.value = floatVal.toFixed(2);
+                            }
                         }
                         checkSum();
                     };
 
-                    div.appendChild(label);
-                    div.appendChild(input);
-                    probInputsDiv.appendChild(div);
+                    outerDiv.appendChild(label);
+                    outerDiv.appendChild(input);
+                    probInputsDiv.appendChild(outerDiv);
                 }
+
                 probabilitiesDiv.appendChild(probInputsDiv);
-
                 inputs = probInputsDiv.querySelectorAll('input[type="number"]');
-
-                // Adjust the width of the probabilities container
                 probabilitiesDiv.style.maxWidth = '200px';
 
                 checkSum();
-            }
-
-            function validateProbabilities(probsArray) {
-                var total = probsArray.reduce(function(a, b) { return a + b; }, 0);
-                total = parseFloat(total.toFixed(2));
-                if (Math.abs(total - 1) > 0.0001) {
-                    return false;
-                }
-                for (var i = 0; i < probsArray.length; i++) {
-                    if (probsArray[i] < 0 || probsArray[i] > 1 || isNaN(probsArray[i])) {
-                        return false;
-                    }
-                }
-                return true;
             }
 
             function checkSum() {
                 var invalidMessage = document.getElementById('invalidMessage');
                 var total = 0;
                 var valid = true;
-                for (var i = 0; i < inputs.length; i++) {
+                if (!inputs) {
+                    return false;
+                }
+                var i;
+                for (i = 0; i < inputs.length; i++) {
                     var val = parseFloat(inputs[i].value);
                     if (isNaN(val) || val < 0 || val > 1) {
                         valid = false;
@@ -530,6 +540,7 @@
                     total += val;
                 }
                 total = parseFloat(total.toFixed(2));
+
                 if (!valid || Math.abs(total - 1) > 0.01) {
                     invalidMessage.innerHTML = 'Invalid values: probabilities must sum to 1.';
                     return false;
@@ -540,160 +551,189 @@
             }
 
             function startSimulation() {
-                var m = parseInt(numSamplesInput.value); // Number of samples
-                var n = parseInt(sampleSizeInput.value); // Sample size
+                var m = parseInt(numSamplesInput.value);
+                var n = parseInt(sampleSizeInput.value);
+
                 if (isNaN(m) || m <= 0 || isNaN(n) || n <= 1) {
                     alert('Please enter valid numbers for the number of samples and sample size (n > 1).');
                     return;
                 }
 
-                // Get probabilities
+                // Aggiorno probs
                 probs = [];
-                for (var i = 0; i < inputs.length; i++) {
+                var i;
+                for (i = 0; i < inputs.length; i++) {
                     var val = parseFloat(inputs[i].value);
                     probs.push(val);
                 }
 
-                // Prepare values (x_i)
+                // Valori x_i
                 var values = [];
-                for (var i = 0; i < probs.length; i++) {
-                    var x = i + 1; // Assuming x_i = i + 1
-                    values.push(x);
+                for (i = 0; i < probs.length; i++) {
+                    var xVal = i + 1;
+                    values.push(xVal);
                 }
 
-                // Compute theoretical mean and variance
+                // Calcolo mean e variance teoriche
                 theoreticalMean = 0;
                 var expectedXSquare = 0;
-                for (var i = 0; i < probs.length; i++) {
-                    var x = values[i];
-                    theoreticalMean += x * probs[i];
-                    expectedXSquare += Math.pow(x, 2) * probs[i];
+                for (i = 0; i < probs.length; i++) {
+                    var xv = values[i];
+                    theoreticalMean += xv * probs[i];
+                    expectedXSquare += (xv * xv) * probs[i];
                 }
-                theoreticalVariance = expectedXSquare - Math.pow(theoreticalMean, 2);
+                theoreticalVariance = expectedXSquare - (theoreticalMean * theoreticalMean);
 
-                // Compute the fourth central moment
+                // Quarto momento centrale
                 var fourthCentralMoment = 0;
-                for (var i = 0; i < probs.length; i++) {
-                    var x = values[i];
-                    fourthCentralMoment += Math.pow(x - theoreticalMean, 4) * probs[i];
+                for (i = 0; i < probs.length; i++) {
+                    var diff = values[i] - theoreticalMean;
+                    var diff4 = diff * diff * diff * diff;
+                    fourthCentralMoment += diff4 * probs[i];
                 }
 
-                // Compute theoretical variance of sample variances
-                theoreticalVarianceOfVariances = (1 / n) * (fourthCentralMoment - ((n - 3) / (n - 1)) * Math.pow(theoreticalVariance, 2));
+                // Var of sample variances
+                theoreticalVarianceOfVariances =
+                    (1 / n) * (fourthCentralMoment - ((n - 3) / (n - 1)) * (theoreticalVariance * theoreticalVariance));
 
-                // Use actual values in labels
-                labels = values.map(function(x) { return x.toString(); });
+                // Label come stringa
+                labels = [];
+                for (i = 0; i < values.length; i++) {
+                    labels.push(values[i].toString());
+                }
 
-                // Clear previous sample variances and counts
                 sampleVariances = [];
                 sampleCounts = [];
 
-                // Prepare cumulative probabilities
+                // Prob cumulata
                 var cumulativeProbs = [];
-                var cumulativeSum = 0;
-                for (var i = 0; i < probs.length; i++) {
-                    cumulativeSum += probs[i];
-                    cumulativeProbs.push(cumulativeSum);
+                var csum = 0;
+                for (i = 0; i < probs.length; i++) {
+                    csum += probs[i];
+                    cumulativeProbs.push(csum);
                 }
 
-                // Generate m samples, each of size n
-                for (var i = 0; i < m; i++) {
+                // Genero m campioni
+                var sampleIdx;
+                for (sampleIdx = 0; sampleIdx < m; sampleIdx++) {
                     var mean = 0;
                     var M2 = 0;
-                    var counts = new Array(probs.length).fill(0); // Counts for this sample
-                    for (var j = 0; j < n; j++) {
-                        // Generate one observation
-                        var rand = Math.random();
-                        for (var k = 0; k < cumulativeProbs.length; k++) {
-                            if (rand <= cumulativeProbs[k]) {
-                                var x = values[k];
-                                counts[k]++;
+                    var counts = [];
+                    var c;
+                    for (c = 0; c < probs.length; c++) {
+                        counts.push(0);
+                    }
+
+                    var j;
+                    for (j = 0; j < n; j++) {
+                        var r = Math.random();
+                        var foundIndex = -1;
+                        var k;
+                        for (k = 0; k < cumulativeProbs.length; k++) {
+                            if (r <= cumulativeProbs[k]) {
+                                foundIndex = k;
                                 break;
                             }
                         }
-                        // Update Welford's algorithm
-                        var delta = x - mean;
+                        var xVal3 = foundIndex + 1;
+                        counts[foundIndex] = counts[foundIndex] + 1;
+
+                        // Welford
+                        var delta = xVal3 - mean;
                         mean = mean + delta / (j + 1);
-                        M2 = M2 + delta * (x - mean);
+                        var delta2 = xVal3 - mean;
+                        M2 = M2 + (delta * delta2);
                     }
-                    // Compute sample variance
-                    var variance = M2 / (n - 1); // Using the unbiased estimator
 
-                    sampleVariances.push(variance); // Keep full precision
-
+                    var varSample = M2 / (n - 1);
+                    sampleVariances.push(varSample);
                     sampleCounts.push(counts);
                 }
 
-                // Compute mean and variance of sample variances
-                var meanOfVariances = sampleVariances.reduce(function(a, b) { return a + b; }, 0) / m;
-                var varianceOfVariances = sampleVariances.reduce(function(acc, val) {
-                    return acc + Math.pow(val - meanOfVariances, 2);
-                }, 0) / m;
+                // Empirical mean of variances
+                var sumVar = 0;
+                for (i = 0; i < sampleVariances.length; i++) {
+                    sumVar += sampleVariances[i];
+                }
+                var meanOfVariances = sumVar / sampleVariances.length;
 
-                // Display stats
+                // Empirical variance of variances
+                var sumSqVar = 0;
+                for (i = 0; i < sampleVariances.length; i++) {
+                    var dv = sampleVariances[i] - meanOfVariances;
+                    sumSqVar = sumSqVar + (dv * dv);
+                }
+                var varianceOfVariances = sumSqVar / sampleVariances.length;
+
                 displayTheoreticalStats(theoreticalMean, theoreticalVariance, theoreticalVarianceOfVariances);
                 displayStats(meanOfVariances, varianceOfVariances);
 
-                // Update charts
                 updateVarianceDistributionChart();
                 updateTheoreticalDistributionChart();
                 updateEmpiricalDistributions();
-
-                // Show the hidden sections
                 showResults();
             }
 
-            function displayTheoreticalStats(theoreticalMean, theoreticalVariance, theoreticalVarianceOfVariances) {
+            function displayTheoreticalStats(theorMean, theorVar, theorVarOfVars) {
                 var theoreticalStatsDisplay = document.getElementById('theoreticalStatsDisplay');
-                theoreticalStatsDisplay.innerHTML = `
-                    Theoretical Mean of Variances: <span>${theoreticalVariance.toFixed(3)}</span> &nbsp;&nbsp; | &nbsp;&nbsp;
-                    Theoretical Variance of Variances: <span>${theoreticalVarianceOfVariances.toFixed(3)}</span>
-                `;
+                theoreticalStatsDisplay.innerHTML = ''
+                    + 'Theoretical Mean of Variances: <span>' + theorVar.toFixed(3) + '</span>'
+                    + ' &nbsp;&nbsp; | &nbsp;&nbsp; '
+                    + 'Theoretical Variance of Variances: <span>' + theorVarOfVars.toFixed(3) + '</span>';
             }
 
-            function displayStats(meanOfVariances, varianceOfVariances) {
+            function displayStats(meanOfVars, varOfVars) {
                 var statsDisplay = document.getElementById('statsDisplay');
-                statsDisplay.innerHTML = `
-                    Empirical Mean of Variances: <span>${meanOfVariances.toFixed(3)}</span> &nbsp;&nbsp; | &nbsp;&nbsp;
-                    Empirical Variance of Variances: <span>${varianceOfVariances.toFixed(3)}</span>
-                `;
+                statsDisplay.innerHTML = ''
+                    + 'Empirical Mean of Variances: <span>' + meanOfVars.toFixed(3) + '</span>'
+                    + ' &nbsp;&nbsp; | &nbsp;&nbsp; '
+                    + 'Empirical Variance of Variances: <span>' + varOfVars.toFixed(3) + '</span>';
             }
 
             function updateVarianceDistributionChart() {
-                // Destroy previous chart if it exists
                 if (varianceDistributionChart) {
                     varianceDistributionChart.destroy();
                 }
 
-                // Truncate variances to two decimal places
-                var truncatedVariances = sampleVariances.map(function(variance) {
-                    return parseFloat(variance.toFixed(2));
-                });
+                // Tronco i sample variances
+                var truncatedVariances = [];
+                var i;
+                for (i = 0; i < sampleVariances.length; i++) {
+                    var tv = parseFloat(sampleVariances[i].toFixed(2));
+                    truncatedVariances.push(tv);
+                }
 
-                // Count frequencies of truncated variances
+                // Conteggio
                 var varianceCounts = {};
-                truncatedVariances.forEach(function(variance) {
-                    variance = variance.toFixed(2);
-                    if (varianceCounts[variance]) {
-                        varianceCounts[variance]++;
+                for (i = 0; i < truncatedVariances.length; i++) {
+                    var key = truncatedVariances[i].toFixed(2);
+                    if (!varianceCounts[key]) {
+                        varianceCounts[key] = 1;
                     } else {
-                        varianceCounts[variance] = 1;
+                        varianceCounts[key] = varianceCounts[key] + 1;
                     }
-                });
+                }
 
-                var binLabels = Object.keys(varianceCounts).sort(function(a, b) {
+                var binLabelsArr = [];
+                for (var prop in varianceCounts) {
+                    binLabelsArr.push(prop);
+                }
+                binLabelsArr.sort(function(a, b) {
                     return parseFloat(a) - parseFloat(b);
                 });
-                var frequencies = binLabels.map(function(bin) {
-                    return varianceCounts[bin];
-                });
+
+                var frequencies = [];
+                var j;
+                for (j = 0; j < binLabelsArr.length; j++) {
+                    var labelKey = binLabelsArr[j];
+                    frequencies.push(varianceCounts[labelKey]);
+                }
 
                 var varianceCtx = document.getElementById('varianceDistributionChart').getContext('2d');
-
                 varianceDistributionChart = new Chart(varianceCtx, {
                     type: 'bar',
                     data: {
-                        labels: binLabels,
+                        labels: binLabelsArr,
                         datasets: [{
                             label: 'Frequency',
                             data: frequencies,
@@ -720,23 +760,18 @@
             }
 
             function updateTheoreticalDistributionChart() {
-                // Destroy previous chart if it exists
                 if (theoreticalDistributionChart) {
                     theoreticalDistributionChart.destroy();
                 }
 
-                // Theoretical probabilities
-                var theoreticalProbs = probs;
-
                 var theoreticalCtx = document.getElementById('theoreticalDistributionChart').getContext('2d');
-
                 theoreticalDistributionChart = new Chart(theoreticalCtx, {
                     type: 'bar',
                     data: {
-                        labels: labels, // Use actual values in labels
+                        labels: labels,
                         datasets: [{
                             label: 'Theoretical Probabilities',
-                            data: theoreticalProbs,
+                            data: probs,
                             backgroundColor: '#095f7a',
                             borderColor: '#074a5e',
                             borderWidth: 1
@@ -761,16 +796,18 @@
 
             function updateEmpiricalDistributions() {
                 var empiricalGrid = document.getElementById('empiricalDistributionsGrid');
-                empiricalGrid.innerHTML = ''; // Clear previous charts
-                empiricalDistributionCharts = []; // Reset charts array
+                empiricalGrid.innerHTML = '';
+                empiricalDistributionCharts = [];
 
-                // Limit the number of charts to display
-                var chartsToDisplay = Math.min(sampleCounts.length, maxDistributionsDisplay);
+                var chartsToDisplay = sampleCounts.length;
+                if (chartsToDisplay > maxDistributionsDisplay) {
+                    chartsToDisplay = maxDistributionsDisplay;
+                }
 
-                for (var i = 0; i < chartsToDisplay; i++) {
+                var i;
+                for (i = 0; i < chartsToDisplay; i++) {
                     var counts = sampleCounts[i];
 
-                    // Create a canvas element for each chart
                     var chartContainer = document.createElement('div');
                     chartContainer.classList.add('empirical-distribution-chart');
 
@@ -780,15 +817,14 @@
                     empiricalGrid.appendChild(chartContainer);
 
                     var ctx = canvas.getContext('2d');
-
                     var chart = new Chart(ctx, {
                         type: 'bar',
                         data: {
-                            labels: labels, // Use actual values in labels
+                            labels: labels,
                             datasets: [{
                                 label: 'Sample ' + (i + 1),
                                 data: counts,
-                                backgroundColor: 'rgba(255, 182, 193, 0.6)', // Pastel Pink
+                                backgroundColor: 'rgba(255, 182, 193, 0.6)',
                                 borderColor: 'rgba(255, 182, 193, 1)',
                                 borderWidth: 1
                             }]
@@ -813,25 +849,24 @@
                     empiricalDistributionCharts.push(chart);
                 }
 
-                // Display message if there are additional samples not shown
                 var additionalSamplesMessage = document.getElementById('additionalSamplesMessage');
                 if (sampleCounts.length > maxDistributionsDisplay) {
                     var remainingSamples = sampleCounts.length - maxDistributionsDisplay;
-                    additionalSamplesMessage.innerHTML = `There are ${remainingSamples} additional samples not displayed to prevent slowing down the page.`;
+                    additionalSamplesMessage.innerHTML = 'There are ' + remainingSamples
+                        + ' additional samples not displayed to prevent slowing down the page.';
                 } else {
                     additionalSamplesMessage.innerHTML = '';
                 }
             }
 
             function showResults() {
-                // Remove the 'hidden' class from the sections to make them visible
                 document.getElementById('theoreticalStatsDisplay').classList.remove('hidden');
                 document.getElementById('statsDisplay').classList.remove('hidden');
                 document.getElementById('varianceDistributionSection').classList.remove('hidden');
                 document.getElementById('theoreticalDistributionSection').classList.remove('hidden');
                 document.getElementById('empiricalDistributionsSection').classList.remove('hidden');
 
-                // Hide the mean of means section (since we're focusing on variances)
+                // Non usiamo la sezione meanOfMeansSection, se presente la nascondiamo
                 var meanOfMeansSection = document.getElementById('meanOfMeansSection');
                 if (meanOfMeansSection) {
                     meanOfMeansSection.classList.add('hidden');
