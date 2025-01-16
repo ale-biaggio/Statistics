@@ -148,6 +148,10 @@
         }
     </style>
 
+    <!-- Include Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include Montserrat font -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <!-- Include MathJax for LaTeX rendering -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async
@@ -229,7 +233,7 @@
                 <textarea id="inputText" placeholder="Paste the text or generate it..."></textarea>
             </div>
             <div class="column center">
-                <button onclick="encryptText()">Encrypt Text &rarr;</button>
+                <button onclick="encryptText()">Encrypt Text →</button>
             </div>
             <div class="column right">
                 <textarea id="encryptedText" placeholder="Encrypted text will appear here..." readonly></textarea>
@@ -257,15 +261,40 @@
                 <textarea id="encryptedTextCopy" placeholder="Encrypted text will appear here..." readonly></textarea>
             </div>
             <div class="column center">
-                <button onclick="decryptText()">Decrypt Text &rarr;</button>
+                <button onclick="decryptText()">Decrypt Text →</button>
             </div>
             <div class="column right">
                 <div id="decryptionResult" class="decryption-result"></div>
                 <textarea id="decryptedText" placeholder="Decrypted text will appear here..." readonly></textarea>
             </div>
         </div>
+
+        <!-- Sezione per la parte opzionale -->
+        <h2>Optional Task: Modular Exponentiation</h2>
+        <div class="optional-task-container">
+            <div class="textareas-container">
+                <div class="column left">
+                    <textarea id="originalText" placeholder="Original text will appear here..." readonly></textarea>
+                </div>
+                <div class="column center">
+                    <button onclick="encodeText()">Encode Text →</button>
+                </div>
+                <div class="column right">
+                    <textarea id="encodedText" placeholder="Encoded text will appear here..." readonly></textarea>
+                </div>
+            </div>
+            <div class="histogram-container">
+                <div class="histogram">
+                    <h2>Encoded Text Letter Frequencies</h2>
+                    <canvas id="encodedHistogram"></canvas>
+                </div>
+            </div>
+            <div class="entropy-display">
+                <p>Shannon Entropy of Encoded Text: <span id="encodedEntropy"></span></p>
+            </div>
+        </div>
     </div>
-    
+
     <!-- Include existing scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -310,6 +339,7 @@
             var encrypted = caesarCipher(text, shiftValue);
             document.getElementById('encryptedText').value = encrypted;
             document.getElementById('encryptedTextCopy').value = encrypted;
+            document.getElementById('originalText').value = text;
             drawEnglishHistogram();
             drawEncryptedHistogram(encrypted);
             estimateShift(encrypted);
@@ -492,12 +522,116 @@
 
             if (originalText === decryptedText) {
                 document.getElementById('decryptionResult').innerHTML =
-                    'The text was decrypted correctly! <span class="emoji">&#128512;</span>';
+                    'The text was decrypted correctly! <span class="emoji">😀</span>';
             } else {
                 document.getElementById('decryptionResult').innerHTML =
-                    'The text was not decrypted correctly. <span class="emoji">&#128577;</span>';
+                    'The text was not decrypted correctly. <span class="emoji">☹</span>';
             }
         }
+
+        // Funzioni per la parte opzionale
+
+        function calculateEntropy(probabilities) {
+            let entropy = 0;
+            for (let i = 0; i < probabilities.length; i++) {
+                if (probabilities[i] > 0) {
+                    entropy -= probabilities[i] * Math.log2(probabilities[i]);
+                }
+            }
+            return entropy;
+        }
+
+        function encodeText() {
+            let text = document.getElementById('originalText').value.toUpperCase();
+            let e = 3; // Example value, you can change this
+            let P = 37; // Example value, you can change this
+            let encoded = '';
+            for (let i = 0; i < text.length; i++) {
+                let charCode = text.charCodeAt(i) - 65; // Convert A-Z to 0-25
+                if (charCode >= 0 && charCode <= 25) {
+                    let encodedCharCode = powerMod(charCode, e, P);
+                    encoded += encodedCharCode + ' ';
+                } else {
+                    encoded += text[i] + ' '; // Keep non-alphabetic characters as they are
+                }
+            }
+            document.getElementById('encodedText').value = encoded.trim();
+            drawEncodedHistogram(encoded);
+        }
+
+        function powerMod(base, exponent, modulus) {
+            if (modulus === 1) return 0;
+            let result = 1;
+            base = base % modulus;
+            while (exponent > 0) {
+                if (exponent % 2 === 1) result = (result * base) % modulus;
+                exponent = exponent >> 1;
+                base = (base * base) % modulus;
+            }
+            return result;
+        }
+
+        function getEncodedFrequencies(encodedText) {
+            let frequencies = {};
+            let total = 0;
+            let values = encodedText.split(' ').filter(val => val !== '');
+
+            values.forEach(val => {
+                if (!isNaN(parseInt(val))) {
+                    if (!frequencies[val]) {
+                        frequencies[val] = 1;
+                    } else {
+                        frequencies[val]++;
+                    }
+                    total++;
+                }
+            });
+
+            for (let key in frequencies) {
+                frequencies[key] = (frequencies[key] / total) * 100;
+            }
+
+            return frequencies;
+        }
+
+        var encodedChart;
+
+        function drawEncodedHistogram(encodedText) {
+            var ctx = document.getElementById('encodedHistogram').getContext('2d');
+            var freqs = getEncodedFrequencies(encodedText);
+
+            var labels = Object.keys(freqs);
+            var data = Object.values(freqs);
+
+            if (encodedChart) {
+                encodedChart.destroy();
+            }
+
+            encodedChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Frequency (%)',
+                        data: data,
+                        backgroundColor: '#095f7a'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Calculate and display Shannon entropy
+            let probabilities = data.map(freq => freq / 100);
+            let entropy = calculateEntropy(probabilities);
+            document.getElementById('encodedEntropy').innerText = entropy.toFixed(2);
+        }
+
     </script>
 </body>
 </html>

@@ -78,7 +78,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            gap: 10px;
+            margin-bottom: 20px;
             padding: 10px;
         }
         .inputs-row {
@@ -286,6 +288,35 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Sezione per la parte opzionale -->
+        <h2>Optional Task</h2>
+        <div class="inputs-container mt-4">
+            <div class="inputs-row">
+                <!-- Max U -->
+                <div class="input-item text-center">
+                    <div class="step-label">Max U:</div>
+                    <input class="form-control d-inline-block" type="number" id="maxUInput" value="1000" min="1">
+                </div>
+                <!-- Caso A/B -->
+                <div class="input-item text-center">
+                    <div class="step-label">Select Case:</div>
+                    <select class="form-control d-inline-block" id="caseSelect">
+                        <option value="A">Case A</option>
+                        <option value="B">Case B</option>
+                    </select>
+                </div>
+                <!-- Start Optional Simulation Button -->
+                <div class="input-item text-center">
+                    <button class="btn btn-custom" id="startOptionalSimulation">Run</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Container per i grafici della parte opzionale -->
+        <div class="graphs-container" id="optionalGraphsContainer">
+            <!-- I grafici per la parte opzionale verranno aggiunti qui -->
         </div>
     </div>
 
@@ -587,7 +618,7 @@
             function displayTheoreticalStats(theorMean, theorVariance) {
                 var theoreticalStatsDisplay = document.getElementById('theoreticalStatsDisplay');
                 theoreticalStatsDisplay.innerHTML = ''
-                    + 'Theoretical Mean: <span>' + theorMean.toFixed(2) + '</span> &nbsp;&nbsp; | &nbsp;&nbsp;'
+                    + 'Theoretical Mean: <span>' + theorMean.toFixed(2) + '</span>    |   '
                     + 'Theoretical Variance: <span>' + theorVariance.toFixed(2) + '</span>';
             }
 
@@ -595,7 +626,7 @@
                 var statsDisplay = document.getElementById('statsDisplay');
                 statsDisplay.innerHTML = ''
                     + 'Mean of Means: <span>' + meanOfMeans.toFixed(2) + '</span>'
-                    + ' &nbsp;&nbsp; | &nbsp;&nbsp; '
+                    + '    |    '
                     + 'Mean of Variances: <span>' + meanOfVariances.toFixed(2) + '</span>';
             }
 
@@ -785,6 +816,113 @@
                 document.getElementById('theoreticalDistributionSection').classList.remove('hidden');
                 document.getElementById('empiricalDistributionsSection').classList.remove('hidden');
             }
+
+            // Funzioni per la parte opzionale
+            function calculateEntropy(probabilities) {
+                let entropy = 0;
+                for (let i = 0; i < probabilities.length; i++) {
+                    if (probabilities[i] > 0) {
+                        entropy -= probabilities[i] * Math.log2(probabilities[i]);
+                    }
+                }
+                return entropy;
+            }
+
+            function generateOptionalDistribution(n, g, maxU) {
+                let Y_values = [];
+                for (let i = 0; i < 1000; i++) {
+                    let U = Math.floor(Math.random() * maxU) + 1;
+                    let Y = powerMod(g, U, n);
+                    Y_values.push(Y);
+                }
+                return Y_values;
+            }
+
+            function powerMod(base, exponent, modulus) {
+                if (modulus === 1) return 0;
+                let result = 1;
+                base = base % modulus;
+                while (exponent > 0) {
+                    if (exponent % 2 === 1) result = (result * base) % modulus;
+                    exponent = exponent >> 1;
+                    base = (base * base) % modulus;
+                }
+                return result;
+            }
+
+            function analyzeOptionalDistribution(Y_values, n, g) {
+                let counts = {};
+                Y_values.forEach(value => {
+                    counts[value] = (counts[value] || 0) + 1;
+                });
+
+                let probabilities = Object.values(counts).map(count => count / Y_values.length);
+                let entropy = calculateEntropy(probabilities);
+
+                console.log(`Distribution for n = ${n}, g = ${g}:`, counts);
+                console.log(`Entropy for n = ${n}, g = ${g}: ${entropy.toFixed(4)}`);
+
+                createOptionalDistributionChart(counts, n, g);
+            }
+
+            function createOptionalDistributionChart(counts, n, g) {
+                let optionalGraphsContainer = document.getElementById('optionalGraphsContainer');
+                let chartContainer = document.createElement('div');
+                chartContainer.classList.add('graph-section');
+                let chartTitle = document.createElement('h3');
+                chartTitle.textContent = `Distribution of Y for n = ${n}, g = ${g}`;
+                chartContainer.appendChild(chartTitle);
+                let canvas = document.createElement('canvas');
+                let canvasId = `optionalChart-${n}-${g}`;
+                canvas.id = canvasId;
+                chartContainer.appendChild(canvas);
+                optionalGraphsContainer.appendChild(chartContainer);
+                let ctx = canvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(counts),
+                        datasets: [{
+                            label: `n = ${n}, g = ${g}`,
+                            data: Object.values(counts),
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: { title: { display: true, text: 'Value of Y' } },
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Frequency' }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            document.getElementById('startOptionalSimulation').addEventListener('click', function() {
+                document.getElementById('optionalGraphsContainer').innerHTML = '';
+                let maxU = parseInt(document.getElementById('maxUInput').value);
+                let selectedCase = document.getElementById('caseSelect').value;
+                let nValue;
+                let gValues;
+
+                if (selectedCase === 'A') {
+                    nValue = 19;
+                    gValues = [2, 3, 10, 17];
+                } else { // Case B
+                    nValue = 15;
+                    gValues = [3, 6, 9, 12];
+                }
+
+                for (let g of gValues) {
+                    let Y_values = generateOptionalDistribution(nValue, g, maxU);
+                    analyzeOptionalDistribution(Y_values, nValue, g);
+                }
+            });
         }
     </script>
 </body>
